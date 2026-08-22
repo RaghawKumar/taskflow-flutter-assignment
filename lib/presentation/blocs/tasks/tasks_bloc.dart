@@ -70,6 +70,13 @@ class TaskFilterChanged extends TasksEvent {
   final TaskFilter filter;
 }
 
+class MemberRemoved extends TasksEvent {
+  MemberRemoved(this.memberUserId, this.actorUserId, this.result);
+  final String memberUserId;
+  final String actorUserId;
+  final Completer<bool> result;
+}
+
 class TasksCleared extends TasksEvent {
   const TasksCleared();
 }
@@ -80,6 +87,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<TaskSaved>(_save);
     on<TaskDeleted>(_delete);
     on<TaskAssigned>(_assign);
+    on<MemberRemoved>(_removeMember);
     on<TaskFilterChanged>((e, emit) => emit(state.copyWith(filter: e.filter)));
     on<TasksCleared>((e, emit) => emit(const TasksState()));
   }
@@ -108,6 +116,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<bool> assign(String id, String? userId) {
     final result = Completer<bool>();
     add(TaskAssigned(id, userId, result));
+    return result.future;
+  }
+
+  Future<bool> removeMember(
+    String memberUserId, {
+    required String actorUserId,
+  }) {
+    final result = Completer<bool>();
+    add(MemberRemoved(memberUserId, actorUserId, result));
     return result.future;
   }
 
@@ -183,6 +200,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await _mutate(emit, () async {
         await repository.assignTask(e.id, e.userId, _orgId!);
       }),
+    );
+  }
+
+  Future<void> _removeMember(MemberRemoved e, Emitter<TasksState> emit) async {
+    e.result.complete(
+      await _mutate(
+        emit,
+        () => repository.removeMember(
+          _orgId!,
+          e.memberUserId,
+          actorUserId: e.actorUserId,
+        ),
+      ),
     );
   }
 }

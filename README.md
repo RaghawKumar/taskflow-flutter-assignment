@@ -39,6 +39,7 @@ The app uses the `flutter_bloc` package with bounded feature ownership: `AuthBlo
 - Status, priority, assignee and inclusive due-date-range filters
 - Organization member picker, assign/unassign, repository-level cross-org protection
 - Repository-level admin enforcement for project deletion
+- Repository-authoritative member management: admins can remove members, self-removal is blocked, and affected tasks are unassigned
 - Pull-to-refresh, loading/empty/error states, delete confirmations
 - SharedPreferences cache of the last successful project/task response
 - Offline and timeout simulation, cached/stale data banner, retry support

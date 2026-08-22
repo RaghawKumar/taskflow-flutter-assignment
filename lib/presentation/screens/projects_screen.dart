@@ -81,7 +81,7 @@ class ProjectsScreen extends StatelessWidget {
                             context.mounted) {
                           final ok = await projectsBloc.delete(
                             p.id,
-                            isAdmin: session.isAdmin,
+                            actorUserId: session.user.id,
                           );
                           if (!ok && context.mounted)
                             showError(context, projectsBloc.state.error!);

@@ -215,15 +215,61 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
   }
 
   @override
-  Future<void> deleteProject(String id, {required bool isAdmin}) async {
-    if (!isAdmin)
-      throw const AppException('Only organization admins can delete projects.');
+  Future<void> deleteProject(String id, {required String actorUserId}) async {
     await source.delay();
     final db = await source.load();
-    if (!db.projects.any((p) => p.id == id))
-      throw const AppException('404 — project not found.');
+    final project = db.projects.where((p) => p.id == id).firstOrNull;
+    if (project == null) throw const AppException('404 — project not found.');
+    _requireAdmin(db, project.orgId, actorUserId);
     db.projects.removeWhere((p) => p.id == id);
     db.tasks.removeWhere((t) => t.projectId == id);
+  }
+
+  @override
+  Future<void> removeMember(
+    String orgId,
+    String memberUserId, {
+    required String actorUserId,
+  }) async {
+    await source.delay();
+    final db = await source.load();
+    _requireAdmin(db, orgId, actorUserId);
+    if (actorUserId == memberUserId) {
+      throw const AppException('Organization admins cannot remove themselves.');
+    }
+    if (!db.members.any(
+      (member) => member.orgId == orgId && member.userId == memberUserId,
+    )) {
+      throw const AppException('404 — organization member not found.');
+    }
+    db.members.removeWhere(
+      (member) => member.orgId == orgId && member.userId == memberUserId,
+    );
+    final projectIds = db.projects
+        .where((project) => project.orgId == orgId)
+        .map((project) => project.id)
+        .toSet();
+    for (var index = 0; index < db.tasks.length; index++) {
+      final task = db.tasks[index];
+      if (projectIds.contains(task.projectId) &&
+          task.assigneeId == memberUserId) {
+        db.tasks[index] = task.copyWith(assigneeId: null);
+      }
+    }
+  }
+
+  void _requireAdmin(MockDatabase db, String orgId, String actorUserId) {
+    final authorized = db.members.any(
+      (member) =>
+          member.orgId == orgId &&
+          member.userId == actorUserId &&
+          member.role == 'org_admin',
+    );
+    if (!authorized) {
+      throw const AppException(
+        'Only organization admins can perform this action.',
+      );
+    }
   }
 
   @override

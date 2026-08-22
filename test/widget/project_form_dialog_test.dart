@@ -77,7 +77,13 @@ class _ProjectRepository implements TaskFlowRepository {
   Future<TaskItem> assignTask(String taskId, String? userId, String orgId) =>
       throw UnimplementedError();
   @override
-  Future<void> deleteProject(String id, {required bool isAdmin}) async {}
+  Future<void> deleteProject(String id, {required String actorUserId}) async {}
+  @override
+  Future<void> removeMember(
+    String orgId,
+    String memberUserId, {
+    required String actorUserId,
+  }) async {}
   @override
   Future<void> deleteTask(String id) async {}
   @override

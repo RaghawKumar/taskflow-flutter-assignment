@@ -5,6 +5,7 @@ import '../blocs/auth/auth_bloc.dart';
 import '../blocs/projects/projects_bloc.dart';
 import '../blocs/settings/settings_cubit.dart';
 import '../blocs/tasks/tasks_bloc.dart';
+import 'members_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -31,6 +32,22 @@ class SettingsScreen extends StatelessWidget {
           Text(session.user.email, textAlign: TextAlign.center),
           Text(session.role, textAlign: TextAlign.center),
           const Divider(height: 40),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.groups_outlined),
+            title: const Text('Organization members'),
+            subtitle: Text(
+              session.isAdmin
+                  ? 'View and manage organization access'
+                  : 'View people in your organization',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MembersScreen()),
+            ),
+          ),
+          const Divider(height: 24),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             secondary: const Icon(Icons.dark_mode_outlined),

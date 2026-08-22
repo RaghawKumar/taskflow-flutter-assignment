@@ -44,9 +44,9 @@ class ProjectSaved extends ProjectsEvent {
 }
 
 class ProjectDeleted extends ProjectsEvent {
-  ProjectDeleted(this.id, this.isAdmin, this.result);
+  ProjectDeleted(this.id, this.actorUserId, this.result);
   final String id;
-  final bool isAdmin;
+  final String actorUserId;
   final Completer<bool> result;
 }
 
@@ -75,9 +75,9 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     return result.future;
   }
 
-  Future<bool> delete(String id, {required bool isAdmin}) {
+  Future<bool> delete(String id, {required String actorUserId}) {
     final result = Completer<bool>();
-    add(ProjectDeleted(id, isAdmin, result));
+    add(ProjectDeleted(id, actorUserId, result));
     return result.future;
   }
 
@@ -135,7 +135,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     e.result.complete(
       await _mutate(
         emit,
-        () => repository.deleteProject(e.id, isAdmin: e.isAdmin),
+        () => repository.deleteProject(e.id, actorUserId: e.actorUserId),
       ),
     );
   }

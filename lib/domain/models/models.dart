@@ -35,13 +35,28 @@ class Organization {
 }
 
 class AppUser {
-  const AppUser({required this.id, required this.name, required this.email});
+  const AppUser({
+    required this.id,
+    required this.name,
+    required this.email,
+    this.avatarUrl,
+  });
   final String id;
   final String name;
   final String email;
-  factory AppUser.fromJson(Map<String, dynamic> json) =>
-      AppUser(id: json['id'], name: json['name'], email: json['email']);
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'email': email};
+  final String? avatarUrl;
+  factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
+    id: json['id'],
+    name: json['name'],
+    email: json['email'],
+    avatarUrl: json['avatar_url'],
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'email': email,
+    if (avatarUrl != null) 'avatar_url': avatarUrl,
+  };
 }
 
 class OrgMember {

@@ -32,6 +32,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     await expectLater(
       find.byType(LoginScreen),
       matchesGoldenFile('goldens/login_screen.png'),

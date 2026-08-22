@@ -73,10 +73,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(state.copyWith(phase: LoadPhase.loading, error: null));
     try {
+      // Keep the branded startup state visible long enough to avoid a flash
+      // when secure-storage restoration completes before the first UI frame.
+      final restored = repository.restoreSession();
+      final results = await Future.wait<Object?>([
+        restored,
+        Future<void>.delayed(const Duration(milliseconds: 900)),
+      ]);
       emit(
         state.copyWith(
           phase: LoadPhase.success,
-          session: await repository.restoreSession(),
+          session: results.first as Session?,
         ),
       );
     } catch (error) {

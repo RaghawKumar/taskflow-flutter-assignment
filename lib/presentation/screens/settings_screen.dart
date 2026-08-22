@@ -6,6 +6,7 @@ import '../blocs/auth/auth_bloc.dart';
 import '../blocs/projects/projects_bloc.dart';
 import '../blocs/settings/settings_cubit.dart';
 import '../blocs/tasks/tasks_bloc.dart';
+import '../widgets/user_avatar.dart';
 import 'members_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -20,10 +21,7 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: Responsive.listPadding(context, maxWidth: 720),
         children: [
-          CircleAvatar(
-            radius: 36,
-            child: Text(session.user.name.substring(0, 1)),
-          ),
+          UserAvatar(user: session.user, radius: 44),
           const SizedBox(height: 12),
           Text(
             session.user.name,

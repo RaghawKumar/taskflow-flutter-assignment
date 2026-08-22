@@ -147,4 +147,4 @@ Unit coverage includes validation, multi-dimensional task filtering, feature-BLo
 - The notification inbox reads assignment-event fixtures and deep-links to related tasks; creating a new assignment does not synthesize a new notification event.
 - Dark mode, responsive/tablet layouts, animations, skeleton loading, accessibility semantics, English/Hindi localization, notifications, cancellation, golden testing, and coverage output are included bonus work. Localization covers application-authored UI; fixture content remains in its source language.
 - Biometrics and inactivity timeout are outside the assignment scope and are not implemented.
-- Avatar URLs are not fetched, preserving the no-third-party-network requirement.
+- Mock `avatar_url` values are parsed and represented in the user model. Their five fixture images are bundled under `assets/avatars/`, so profiles and member lists display them without runtime third-party network calls.

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/tasks/tasks_bloc.dart';
+import '../widgets/user_avatar.dart';
 import 'projects_screen.dart';
 
 class MembersScreen extends StatelessWidget {
@@ -29,7 +30,7 @@ class MembersScreen extends StatelessWidget {
                 horizontal: 8,
                 vertical: 8,
               ),
-              leading: CircleAvatar(child: Text(member.name.substring(0, 1))),
+              leading: UserAvatar(user: member, radius: 22),
               title: Text(member.name),
               subtitle: Text(member.email),
               trailing: session.isAdmin && !isCurrentUser

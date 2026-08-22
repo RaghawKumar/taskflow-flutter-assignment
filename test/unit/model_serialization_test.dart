@@ -4,7 +4,12 @@ import 'package:taskflow/domain/models/models.dart';
 void main() {
   test('all read-only entities support JSON round trips', () {
     const organization = Organization(id: 'o1', name: 'Org');
-    const user = AppUser(id: 'u1', name: 'User', email: 'u@example.com');
+    const user = AppUser(
+      id: 'u1',
+      name: 'User',
+      email: 'u@example.com',
+      avatarUrl: 'https://example.test/avatar.jpg',
+    );
     const member = OrgMember(orgId: 'o1', userId: 'u1', role: 'member');
     const credential = AuthCredential(
       email: 'u@example.com',
@@ -24,6 +29,7 @@ void main() {
       organization.name,
     );
     expect(AppUser.fromJson(user.toJson()).email, user.email);
+    expect(AppUser.fromJson(user.toJson()).avatarUrl, user.avatarUrl);
     expect(OrgMember.fromJson(member.toJson()).role, member.role);
     expect(
       AuthCredential.fromJson(credential.toJson()).orgId,

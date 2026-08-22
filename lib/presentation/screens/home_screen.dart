@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
 import '../../core/app_localizations.dart';
+import '../../core/app_colors.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/notifications/notifications_bloc.dart';
 import '../blocs/projects/projects_bloc.dart';
@@ -104,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
       bottomSheet: settings.offline
           ? Material(
-              color: Colors.orange,
+              color: AppColors.warning,
               child: SafeArea(
                 top: false,
                 child: SizedBox(
@@ -339,7 +340,7 @@ class _PriorityBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = switch (priority) {
       'urgent' => Theme.of(context).colorScheme.error,
-      'high' => Colors.orange.shade800,
+      'high' => AppColors.warning,
       'medium' => Theme.of(context).colorScheme.primary,
       _ => Theme.of(context).colorScheme.outline,
     };

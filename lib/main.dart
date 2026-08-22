@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/app_localizations.dart';
+import 'core/app_colors.dart';
 import 'data/datasources/mock_data_source.dart';
 import 'data/repositories/local_repositories.dart';
 import 'domain/models/models.dart';
@@ -93,19 +94,41 @@ class TaskFlowApp extends StatelessWidget {
     ),
   );
 
-  ThemeData _theme(Brightness brightness) => ThemeData(
-    useMaterial3: true,
-    brightness: brightness,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xff5b5bd6),
+  ThemeData _theme(Brightness brightness) {
+    final scheme = AppColors.scheme(brightness);
+    final dark = brightness == Brightness.dark;
+    return ThemeData(
+      useMaterial3: true,
       brightness: brightness,
-    ),
-    inputDecorationTheme: const InputDecorationTheme(
-      border: OutlineInputBorder(),
-    ),
-    cardTheme: const CardThemeData(
-      margin: EdgeInsets.symmetric(vertical: 6),
-      elevation: 0,
-    ),
-  );
+      colorScheme: scheme,
+      scaffoldBackgroundColor: dark
+          ? AppColors.darkBackground
+          : AppColors.lightBackground,
+      appBarTheme: AppBarTheme(
+        backgroundColor: dark
+            ? AppColors.darkBackground
+            : AppColors.lightBackground,
+        foregroundColor: scheme.onSurface,
+        surfaceTintColor: Colors.transparent,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        indicatorColor: scheme.secondaryContainer,
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        indicatorColor: scheme.secondaryContainer,
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        border: OutlineInputBorder(),
+      ),
+      cardTheme: CardThemeData(
+        color: scheme.surface,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        elevation: 0,
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
+      ),
+    );
+  }
 }

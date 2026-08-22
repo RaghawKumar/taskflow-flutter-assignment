@@ -117,6 +117,22 @@ flutter build apk --release
 
 `flutter test` runs the isolated unit, widget, and golden suites. The integration command requires a connected Android target and builds/installs a test application. APK generation is not required during ordinary development; when explicitly requested, the release build is written to `build/app/outputs/flutter-apk/app-release.apk`.
 
+## Build and production readiness
+
+The Task 13 commands were verified with Flutter 3.41.9 / Dart 3.11.5:
+
+| Check | Result |
+| --- | --- |
+| `flutter pub get` | Pass — dependencies resolve successfully |
+| `flutter analyze` | Pass — no issues found |
+| `flutter test` | Pass — 35 tests |
+| `flutter build apk --debug` | Pass — `build/app/outputs/flutter-apk/app-debug.apk` |
+| `flutter build apk --release` | Pass — `build/app/outputs/flutter-apk/app-release.apk` |
+
+The app starts from bundled assets and local storage without source edits, build-time secrets, environment files, or live service configuration. A source scan found no `print`, `debugPrint`, `developer.log`, private-key, keystore, or service-credential files. Mock reviewer credentials and tokens exist only in the assignment fixture; tokens are not logged. Stateful controllers used by the UI are disposed with their owning widgets, and cooperative cancellation prevents superseded repository reads from lingering. No obvious lifecycle leak was found during review.
+
+The generated release APK is suitable for reviewer installation. Publishing to Google Play requires replacing Android's development signing setup with the owner's private upload/release key; no signing secret is committed to this repository.
+
 ## Tests
 
 Unit coverage includes validation, multi-dimensional task filtering, feature-BLoC authentication, project loading/error recovery, task filtering, notifications, cancellation, authorization, serialization, and mock-data parsing. Widget coverage includes login validation, task-list loading/empty/error/success, task-status updates, responsive breakpoints, accessibility, localization, destructive dialogs, and a login-screen golden. Integration tests independently cover mock login, organization project listing, task listing, task create/update, and assignment. Tests use fresh mock-backed dependencies and never require a network. `flutter test --coverage` writes the LCOV report to `coverage/lcov.info`; regenerate goldens intentionally with `flutter test --update-goldens test/widget/golden_login_test.dart`.

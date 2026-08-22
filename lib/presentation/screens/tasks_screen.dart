@@ -138,86 +138,75 @@ class TaskCard extends StatelessWidget {
               builder: (_) => TaskDetailScreen(taskId: task.id),
             ),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: 5,
-                child: ColoredBox(color: primary),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(13),
-                          ),
-                          child: Icon(Icons.task_alt_rounded, color: primary),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            task.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.chevron_right_rounded, color: primary),
-                      ],
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: Icon(Icons.task_alt_rounded, color: primary),
                     ),
-                    if (task.description.trim().isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        task.description,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        task.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.35,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _TaskMetaPill(
-                          icon: Icons.flag_outlined,
-                          label: enumLabel(task.priority.name),
-                        ),
-                        _TaskMetaPill(
-                          icon: Icons.track_changes_rounded,
-                          label: enumLabel(task.status.name),
-                        ),
-                        _TaskMetaPill(
-                          icon: Icons.person_outline_rounded,
-                          label: assignee ?? 'Unassigned',
-                        ),
-                        _TaskMetaPill(
-                          icon: Icons.calendar_today_outlined,
-                          label:
-                              '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
-                        ),
-                      ],
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.chevron_right_rounded, color: primary),
+                  ],
+                ),
+                if (task.description.trim().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    task.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _TaskMetaPill(
+                      icon: Icons.flag_outlined,
+                      label: enumLabel(task.priority.name),
+                    ),
+                    _TaskMetaPill(
+                      icon: Icons.track_changes_rounded,
+                      label: enumLabel(task.status.name),
+                    ),
+                    _TaskMetaPill(
+                      icon: Icons.person_outline_rounded,
+                      label: assignee ?? 'Unassigned',
+                    ),
+                    _TaskMetaPill(
+                      icon: Icons.calendar_today_outlined,
+                      label:
+                          '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -259,57 +259,46 @@ class DashboardPage extends StatelessWidget {
                         ).colorScheme.primary.withValues(alpha: 0.10),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 76,
+                    child: ListTile(
+                      key: Key('upcoming_task_${t.id}'),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => TaskDetailScreen(taskId: t.id),
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      leading: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer,
+                        child: Icon(
+                          Icons.radio_button_unchecked,
+                          size: 18,
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                        Expanded(
-                          child: ListTile(
-                            key: Key('upcoming_task_${t.id}'),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => TaskDetailScreen(taskId: t.id),
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 6,
-                            ),
-                            leading: CircleAvatar(
-                              radius: 18,
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primaryContainer,
-                              child: Icon(
-                                Icons.radio_button_unchecked,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            title: Text(
-                              t.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Text('Due ${_date(t.dueDate)}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _PriorityBadge(priority: t.priority.name),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ],
-                            ),
+                      ),
+                      title: Text(
+                        t.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text('Due ${_date(t.dueDate)}'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _PriorityBadge(priority: t.priority.name),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

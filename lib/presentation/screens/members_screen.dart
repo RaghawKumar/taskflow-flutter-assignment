@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
+import '../../domain/models/models.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/tasks/tasks_bloc.dart';
 import '../widgets/user_avatar.dart';
@@ -15,34 +16,76 @@ class MembersScreen extends StatelessWidget {
     final tasksBloc = context.watch<TasksBloc>();
     final members = tasksBloc.state.members;
     return Scaffold(
-      appBar: AppBar(title: const Text('Organization Members')),
+      appBar: AppBar(
+        title: const Text(
+          'Organization Members',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: () => tasksBloc.load(session.orgId),
-        child: ListView.separated(
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: Responsive.listPadding(context, maxWidth: 760),
-          itemCount: members.length,
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final member = members[index];
-            final isCurrentUser = member.id == session.user.id;
-            return ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 8,
+          children: [
+            _MembersHeader(
+              memberCount: members.length,
+              orgId: session.orgId,
+              isAdmin: session.isAdmin,
+            ),
+            const SizedBox(height: 26),
+            Row(
+              children: [
+                Text(
+                  'People',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                const Spacer(),
+                Text(
+                  '${members.length} total',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (members.isEmpty)
+              const _EmptyMembers()
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = constraints.maxWidth >= 620 ? 2 : 1;
+                  final cardWidth =
+                      (constraints.maxWidth - (12 * (columns - 1))) / columns;
+                  return Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: members.map((member) {
+                      final isCurrentUser = member.id == session.user.id;
+                      return SizedBox(
+                        width: cardWidth,
+                        child: _MemberCard(
+                          member: member,
+                          role: isCurrentUser ? session.role : 'member',
+                          isCurrentUser: isCurrentUser,
+                          canRemove: session.isAdmin && !isCurrentUser,
+                          onRemove: () => _remove(
+                            context,
+                            tasksBloc,
+                            member.id,
+                            member.name,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
               ),
-              leading: UserAvatar(user: member, radius: 22),
-              title: Text(member.name),
-              subtitle: Text(member.email),
-              trailing: session.isAdmin && !isCurrentUser
-                  ? IconButton(
-                      tooltip: 'Remove member',
-                      icon: const Icon(Icons.person_remove_outlined),
-                      onPressed: () =>
-                          _remove(context, tasksBloc, member.id, member.name),
-                    )
-                  : Chip(label: Text(isCurrentUser ? session.role : 'Member')),
-            );
-          },
+          ],
         ),
       ),
     );
@@ -57,9 +100,17 @@ class MembersScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove Member'),
+        icon: Icon(
+          Icons.person_remove_outlined,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: const Text(
+          'Remove Member',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         content: Text(
           'Remove $memberName from this organization? Their assigned tasks will become unassigned.',
+          textAlign: TextAlign.center,
         ),
         actions: [
           TextButton(
@@ -79,5 +130,242 @@ class MembersScreen extends StatelessWidget {
     if (!removed && context.mounted) {
       showError(context, bloc.state.error ?? 'Could not remove member.');
     }
+  }
+}
+
+class _MembersHeader extends StatelessWidget {
+  const _MembersHeader({
+    required this.memberCount,
+    required this.orgId,
+    required this.isAdmin,
+  });
+
+  final int memberCount;
+  final String orgId;
+  final bool isAdmin;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: primary.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: primary,
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: Icon(
+              Icons.groups_rounded,
+              size: 28,
+              color: theme.colorScheme.onPrimary,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$memberCount ${memberCount == 1 ? 'member' : 'members'}',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  isAdmin
+                      ? 'Manage access for organization $orgId'
+                      : 'People with access to organization $orgId',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isAdmin)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.11),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Admin',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MemberCard extends StatelessWidget {
+  const _MemberCard({
+    required this.member,
+    required this.role,
+    required this.isCurrentUser,
+    required this.canRemove,
+    required this.onRemove,
+  });
+
+  final AppUser member;
+  final String role;
+  final bool isCurrentUser;
+  final bool canRemove;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final roleLabel = role
+        .split('_')
+        .map(
+          (part) => part.isEmpty
+              ? part
+              : '${part[0].toUpperCase()}${part.substring(1)}',
+        )
+        .join(' ');
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: theme.brightness == Brightness.dark ? 0 : 2,
+      shadowColor: primary.withValues(alpha: 0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: primary.withValues(alpha: 0.15)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: primary.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
+              ),
+              child: UserAvatar(user: member, radius: 24),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          member.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      if (isCurrentUser) ...[
+                        const SizedBox(width: 6),
+                        Icon(Icons.verified_rounded, size: 18, color: primary),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    member.email,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      isCurrentUser ? '$roleLabel • You' : roleLabel,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (canRemove) ...[
+              const SizedBox(width: 6),
+              IconButton.filledTonal(
+                tooltip: 'Remove member',
+                icon: const Icon(Icons.person_remove_outlined),
+                onPressed: onRemove,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyMembers extends StatelessWidget {
+  const _EmptyMembers();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: primary.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.group_off_outlined, size: 44, color: primary),
+          const SizedBox(height: 12),
+          Text(
+            'No organization members',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Pull down to refresh the organization member list.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

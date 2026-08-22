@@ -89,6 +89,6 @@ Unit coverage includes validation, multi-dimensional task filtering, feature-BLo
 
 - Project/task mutations are intentionally in-memory for the process lifetime, as permitted by the brief; successful reads are cached for offline display.
 - Registration simulates success and does not create a persistent credential.
-- The mock refresh response renews the same supplied token value because the fixture supplies only one pair.
+- Mock refresh retains the fixture refresh token but issues a distinct JWT-style simulated access token and renews its 15-minute expiry. Tokens are never logged or exposed to widgets.
 - Notification inbox, biometrics, inactivity timeout, pending-operation sync, and request cancellation are bonus scope and are not included.
 - Avatar URLs are not fetched, preserving the no-third-party-network requirement.

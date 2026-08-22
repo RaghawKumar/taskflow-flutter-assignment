@@ -134,12 +134,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: const Text('Create an account'),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Reviewer: ava.admin@nimbusdigital.test / Password123!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12),
-                    ),
                   ],
                 ),
               ),

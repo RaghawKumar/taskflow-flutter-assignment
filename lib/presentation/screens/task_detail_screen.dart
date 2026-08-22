@@ -5,15 +5,38 @@ import '../../domain/models/models.dart';
 import '../blocs/tasks/tasks_bloc.dart';
 import 'projects_screen.dart';
 
-class TaskDetailScreen extends StatelessWidget {
+class TaskDetailScreen extends StatefulWidget {
   const TaskDetailScreen({super.key, required this.taskId});
   final String taskId;
+
+  @override
+  State<TaskDetailScreen> createState() => _TaskDetailScreenState();
+}
+
+class _TaskDetailScreenState extends State<TaskDetailScreen> {
+  bool deleting = false;
+
   @override
   Widget build(BuildContext context) {
     final bloc = context.watch<TasksBloc>();
-    final matches = bloc.state.tasks.where((t) => t.id == taskId);
-    if (matches.isEmpty)
+    final matches = bloc.state.tasks.where((t) => t.id == widget.taskId);
+    if (matches.isEmpty && deleting) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Deleting task…'),
+            ],
+          ),
+        ),
+      );
+    }
+    if (matches.isEmpty) {
       return const Scaffold(body: Center(child: Text('404 — task not found.')));
+    }
     final task = matches.first;
     return Scaffold(
       appBar: AppBar(
@@ -30,12 +53,8 @@ class TaskDetailScreen extends StatelessWidget {
             icon: const Icon(Icons.edit),
           ),
           IconButton(
-            onPressed: () async {
-              if (await confirmDelete(context, task.title)) {
-                final ok = await bloc.delete(task.id);
-                if (context.mounted && ok) Navigator.pop(context);
-              }
-            },
+            tooltip: 'Delete task',
+            onPressed: deleting ? null : () => _deleteTask(bloc, task),
             icon: const Icon(Icons.delete_outline),
           ),
         ],
@@ -114,7 +133,47 @@ class TaskDetailScreen extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _deleteTask(TasksBloc bloc, TaskItem task) async {
+    if (!await confirmTaskDelete(context, task.title) || !mounted) return;
+    setState(() => deleting = true);
+    final ok = await bloc.delete(task.id);
+    if (!mounted) return;
+    if (ok) {
+      Navigator.pop(context);
+    } else {
+      setState(() => deleting = false);
+      showError(context, bloc.state.error ?? 'Could not delete task.');
+    }
+  }
 }
+
+Future<bool> confirmTaskDelete(BuildContext context, String taskTitle) async =>
+    await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Task'),
+        content: Text(
+          'Are you sure you want to delete “$taskTitle”? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            key: const Key('confirm_delete_task'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete Task'),
+          ),
+        ],
+      ),
+    ) ??
+    false;
 
 TaskRequest _request(TaskItem t) => TaskRequest(
   title: t.title,

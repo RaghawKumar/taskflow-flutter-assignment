@@ -83,7 +83,16 @@ class LocalAuthRepository implements AuthRepository {
         Duration(seconds: db.tokens.accessExpiresIn),
       ),
     );
-    await _write(renewed, db.tokens);
+    final nonce = base64Url
+        .encode(utf8.encode(DateTime.now().microsecondsSinceEpoch.toString()))
+        .replaceAll('=', '');
+    final refreshedTokens = AuthTokens(
+      accessToken: 'mock.refreshed.$nonce',
+      refreshToken: db.tokens.refreshToken,
+      accessExpiresIn: db.tokens.accessExpiresIn,
+      refreshExpiresIn: db.tokens.refreshExpiresIn,
+    );
+    await _write(renewed, refreshedTokens);
     return renewed;
   }
 

@@ -16,18 +16,18 @@ class LocalAuthRepository implements AuthRepository {
   Future<Session> login(LoginRequest request) async {
     await source.delay();
     final db = await source.load();
-    Map<String, dynamic>? match;
+    AuthCredential? match;
     for (final c in db.credentials) {
-      if ((c['email'] as String).toLowerCase() == request.email.toLowerCase() &&
-          c['password'] == request.password)
+      if (c.email.toLowerCase() == request.email.toLowerCase() &&
+          c.password == request.password)
         match = c;
     }
     if (match == null) throw const AppException('Incorrect email or password.');
-    final user = db.users.firstWhere((u) => u.email == match!['email']);
+    final user = db.users.firstWhere((u) => u.email == match!.email);
     final session = Session(
       user: user,
-      orgId: match['org_id'],
-      role: match['role'],
+      orgId: match.orgId,
+      role: match.role,
       expiresAt: DateTime.now().add(
         Duration(seconds: db.tokens.accessExpiresIn),
       ),
@@ -203,15 +203,15 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
         description: request.description.trim(),
         createdAt: DateTime.now(),
       );
-      db.projects.add(item);
-      return item;
+      return (await source.upsertProject(item)).data;
     }
     final index = db.projects.indexWhere((p) => p.id == id);
     if (index < 0) throw const AppException('404 — project not found.');
-    return db.projects[index] = db.projects[index].copyWith(
+    final updated = db.projects[index].copyWith(
       name: request.name.trim(),
       description: request.description.trim(),
     );
+    return (await source.upsertProject(updated)).data;
   }
 
   @override
@@ -221,8 +221,7 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
     final project = db.projects.where((p) => p.id == id).firstOrNull;
     if (project == null) throw const AppException('404 — project not found.');
     _requireAdmin(db, project.orgId, actorUserId);
-    db.projects.removeWhere((p) => p.id == id);
-    db.tasks.removeWhere((t) => t.projectId == id);
+    await source.removeProject(id);
   }
 
   @override
@@ -242,20 +241,7 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
     )) {
       throw const AppException('404 — organization member not found.');
     }
-    db.members.removeWhere(
-      (member) => member.orgId == orgId && member.userId == memberUserId,
-    );
-    final projectIds = db.projects
-        .where((project) => project.orgId == orgId)
-        .map((project) => project.id)
-        .toSet();
-    for (var index = 0; index < db.tasks.length; index++) {
-      final task = db.tasks[index];
-      if (projectIds.contains(task.projectId) &&
-          task.assigneeId == memberUserId) {
-        db.tasks[index] = task.copyWith(assigneeId: null);
-      }
-    }
+    await source.removeMembership(orgId, memberUserId);
   }
 
   void _requireAdmin(MockDatabase db, String orgId, String actorUserId) {
@@ -295,12 +281,11 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
         dueDate: request.dueDate,
         createdAt: DateTime.now(),
       );
-      db.tasks.add(item);
-      return item;
+      return (await source.upsertTask(item)).data;
     }
     final index = db.tasks.indexWhere((t) => t.id == id);
     if (index < 0) throw const AppException('404 — task not found.');
-    return db.tasks[index] = db.tasks[index].copyWith(
+    final updated = db.tasks[index].copyWith(
       title: request.title.trim(),
       description: request.description.trim(),
       status: request.status,
@@ -308,6 +293,7 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
       assigneeId: request.assigneeId,
       dueDate: request.dueDate,
     );
+    return (await source.upsertTask(updated)).data;
   }
 
   @override
@@ -316,7 +302,7 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
     final db = await source.load();
     if (!db.tasks.any((t) => t.id == id))
       throw const AppException('404 — task not found.');
-    db.tasks.removeWhere((t) => t.id == id);
+    await source.removeTask(id);
   }
 
   @override
@@ -334,7 +320,7 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
         'That user does not belong to this organization.',
       );
     await source.delay();
-    return db.tasks[index] = db.tasks[index].copyWith(assigneeId: userId);
+    return (await source.setTaskAssignee(taskId, userId)).data;
   }
 
   Future<void> _validateMember(

@@ -31,6 +31,7 @@ class Organization {
   final String name;
   factory Organization.fromJson(Map<String, dynamic> json) =>
       Organization(id: json['id'], name: json['name']);
+  Map<String, dynamic> toJson() => {'id': id, 'name': name};
 }
 
 class AppUser {
@@ -40,6 +41,7 @@ class AppUser {
   final String email;
   factory AppUser.fromJson(Map<String, dynamic> json) =>
       AppUser(id: json['id'], name: json['name'], email: json['email']);
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'email': email};
 }
 
 class OrgMember {
@@ -56,6 +58,36 @@ class OrgMember {
     userId: json['user_id'],
     role: json['role'],
   );
+  Map<String, dynamic> toJson() => {
+    'org_id': orgId,
+    'user_id': userId,
+    'role': role,
+  };
+}
+
+class AuthCredential {
+  const AuthCredential({
+    required this.email,
+    required this.password,
+    required this.orgId,
+    required this.role,
+  });
+  final String email;
+  final String password;
+  final String orgId;
+  final String role;
+  factory AuthCredential.fromJson(Map<String, dynamic> json) => AuthCredential(
+    email: json['email'],
+    password: json['password'],
+    orgId: json['org_id'],
+    role: json['role'],
+  );
+  Map<String, dynamic> toJson() => {
+    'email': email,
+    'password': password,
+    'org_id': orgId,
+    'role': role,
+  };
 }
 
 class TaskComment {
@@ -278,18 +310,50 @@ class AuthTokens {
   final String refreshToken;
   final int accessExpiresIn;
   final int refreshExpiresIn;
+  factory AuthTokens.fromJson(Map<String, dynamic> json) => AuthTokens(
+    accessToken: json['access_token'],
+    refreshToken: json['refresh_token'],
+    accessExpiresIn: json['access_token_expires_in_seconds'],
+    refreshExpiresIn: json['refresh_token_expires_in_seconds'],
+  );
+  Map<String, dynamic> toJson() => {
+    'access_token': accessToken,
+    'refresh_token': refreshToken,
+    'access_token_expires_in_seconds': accessExpiresIn,
+    'refresh_token_expires_in_seconds': refreshExpiresIn,
+  };
+}
+
+class DataResponse<T> {
+  const DataResponse({required this.data, this.stale = false});
+  final T data;
+  final bool stale;
+}
+
+class ListResponse<T> {
+  const ListResponse({required this.items, this.stale = false});
+  final List<T> items;
+  final bool stale;
+}
+
+class MutationResponse<T> {
+  const MutationResponse({required this.data, this.message = 'Success'});
+  final T data;
+  final String message;
 }
 
 class LoginRequest {
   const LoginRequest(this.email, this.password);
   final String email;
   final String password;
+  Map<String, dynamic> toJson() => {'email': email, 'password': password};
 }
 
 class ProjectRequest {
   const ProjectRequest({required this.name, required this.description});
   final String name;
   final String description;
+  Map<String, dynamic> toJson() => {'name': name, 'description': description};
 }
 
 class TaskRequest {
@@ -307,6 +371,14 @@ class TaskRequest {
   final TaskPriority priority;
   final DateTime dueDate;
   final String? assigneeId;
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'description': description,
+    'status': taskStatusJson(status),
+    'priority': priority.name,
+    'due_date': dueDate.toIso8601String().substring(0, 10),
+    'assignee_id': assigneeId,
+  };
 }
 
 class AppException implements Exception {

@@ -27,6 +27,8 @@ lib/
 
 `AssetMockDataSource` is the only class that reads `assets/mock-data.json`. Every top-level entity collection is parsed independently into typed organizations, users, organization members, projects, tasks, comments, notifications, credentials, and token data. UI code dispatches events to feature-specific BLoCs, which talk to repository interfaces; a future HTTP implementation can replace the local repositories without changing screens. Constructor injection wires dependencies in `main.dart`.
 
+All mock writes are also centralized in `MockDataSource` mutation methods (`upsertProject`, `removeProject`, `upsertTask`, `removeTask`, `setTaskAssignee`, and `removeMembership`). Repositories validate and authorize requests, then call these methods; they never mutate mock collections directly. Entities and request types support JSON serialization/deserialization, with generic `DataResponse`, `ListResponse`, and `MutationResponse` types mirroring transport-layer responses.
+
 The app uses the `flutter_bloc` package with bounded feature ownership: `AuthBloc`, `ProjectsBloc`, `TasksBloc`, and `SettingsCubit`. `MultiBlocProvider` injects them, an authentication listener coordinates organization-scoped initial loads, and screens watch only the feature state they need. `LoadPhase` models initial, loading, success, empty, and error consistently. Mutations and authorization checks live in BLoCs/repositories rather than widgets.
 
 ## Implemented flows

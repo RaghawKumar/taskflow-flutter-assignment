@@ -57,54 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthBloc>();
-    final dark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          ExcludeSemantics(
-            child: Opacity(
-              opacity: dark ? 0.22 : 0.46,
-              child: Image.asset(
-                'assets/branding/taskflow_login_background_v2.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-              ),
-            ),
-          ),
-          ColoredBox(
-            color: Theme.of(
-              context,
-            ).scaffoldBackgroundColor.withValues(alpha: dark ? 0.72 : 0.18),
-          ),
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: constraints.maxWidth < 600 ? 20 : 40,
-                  vertical: constraints.maxHeight < 700 ? 16 : 32,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight:
-                        constraints.maxHeight -
-                        (constraints.maxHeight < 700 ? 32 : 64),
-                  ),
-                  child: Align(
-                    alignment: Alignment(
-                      0,
-                      constraints.maxHeight < 700 ? 0 : 0.48,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 460),
-                      child: _loginForm(context, auth),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+      body: _AuthBackground(
+        child: _AuthCardLayout(child: _loginForm(context, auth)),
       ),
     );
   }
@@ -224,65 +179,173 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.l10n.text('register'))),
-    body: Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: Form(
-            key: form,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: name,
-                  validator: (v) => Validators.required(v, 'Name'),
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: email,
-                  validator: Validators.email,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: password,
-                  validator: Validators.password,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () async {
-                      if (!form.currentState!.validate()) return;
-                      await context.read<AuthBloc>().register(
-                        name.text,
-                        email.text,
-                        password.text,
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Account simulated successfully. Please sign in with a test account.',
-                            ),
-                          ),
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text(context.l10n.text('register')),
+        backgroundColor: Colors.transparent,
+      ),
+      body: _AuthBackground(
+        child: _AuthCardLayout(
+          topOffset: 220,
+          child: Card(
+            color: Theme.of(
+              context,
+            ).colorScheme.surface.withValues(alpha: dark ? 0.88 : 0.84),
+            elevation: 8,
+            shadowColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+              child: Form(
+                key: form,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Create your TaskFlow account',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Registration is simulated for this assignment.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 28),
+                    TextFormField(
+                      controller: name,
+                      validator: (v) => Validators.required(v, 'Name'),
+                      decoration: const InputDecoration(labelText: 'Name'),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: email,
+                      validator: Validators.email,
+                      decoration: const InputDecoration(labelText: 'Email'),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: password,
+                      validator: Validators.password,
+                      obscureText: true,
+                      decoration: const InputDecoration(labelText: 'Password'),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                      ),
+                      onPressed: () async {
+                        if (!form.currentState!.validate()) return;
+                        await context.read<AuthBloc>().register(
+                          name.text,
+                          email.text,
+                          password.text,
                         );
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: const Text('Register'),
-                  ),
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Account simulated successfully. Please sign in with a test account.',
+                              ),
+                            ),
+                          );
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: const Text('Register'),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AuthCardLayout extends StatelessWidget {
+  const _AuthCardLayout({required this.child, this.topOffset = 310});
+
+  final Widget child;
+  final double topOffset;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final short = constraints.maxHeight < 700;
+        final horizontal = constraints.maxWidth < 600 ? 20.0 : 40.0;
+        final vertical = short ? 16.0 : 32.0;
+        return SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(horizontal, vertical, horizontal, 32),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight - vertical - 32,
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(top: short ? 24 : topOffset),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     ),
   );
+}
+
+class _AuthBackground extends StatelessWidget {
+  const _AuthBackground({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Positioned(
+          top: -90,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: ExcludeSemantics(
+            child: Opacity(
+              opacity: dark ? 0.22 : 0.46,
+              child: Image.asset(
+                'assets/branding/taskflow_login_background_v2.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+              ),
+            ),
+          ),
+        ),
+        ColoredBox(
+          color: Theme.of(
+            context,
+          ).scaffoldBackgroundColor.withValues(alpha: dark ? 0.72 : 0.18),
+        ),
+        child,
+      ],
+    );
+  }
 }

@@ -32,6 +32,15 @@ void main() {
     expect(find.text('Email is required.'), findsOneWidget);
     expect(find.text('Password is required.'), findsOneWidget);
     expect(find.textContaining('Password123!'), findsNothing);
+
+    await tester.tap(find.text('Create an account'));
+    await tester.pumpAndSettle();
+    expect(find.byType(RegisterScreen), findsOneWidget);
+    final background = tester.widget<Image>(find.byType(Image));
+    expect(
+      (background.image as AssetImage).assetName,
+      'assets/branding/taskflow_login_background_v2.png',
+    );
   });
 }
 

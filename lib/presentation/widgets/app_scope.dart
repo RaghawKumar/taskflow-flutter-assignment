@@ -1,15 +1,10 @@
 import 'package:flutter/widgets.dart';
-import '../controllers/app_controller.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../controllers/app_bloc.dart';
 
-class AppScope extends InheritedNotifier<AppController> {
-  const AppScope({
-    super.key,
-    required AppController controller,
-    required super.child,
-  }) : super(notifier: controller);
-  static AppController of(BuildContext context, {bool listen = true}) {
-    if (!listen)
-      return context.getInheritedWidgetOfExactType<AppScope>()!.notifier!;
-    return context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
-  }
+class AppScope extends BlocProvider<AppBloc> {
+  const AppScope({super.key, required AppBloc bloc, required super.child})
+    : super.value(value: bloc);
+  static AppBloc of(BuildContext context, {bool listen = true}) =>
+      listen ? context.watch<AppBloc>() : context.read<AppBloc>();
 }

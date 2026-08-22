@@ -16,14 +16,14 @@ lib/
 │   ├── models/               entities, requests, filters and state enums
 │   └── repositories/         backend-independent interfaces
 └── presentation/
-    ├── controllers/          ChangeNotifier application/business state
+    ├── controllers/          flutter_bloc events, immutable state, business logic
     ├── screens/              auth, dashboard, projects, tasks, settings
     └── widgets/              injected controller scope
 ```
 
-`AssetMockDataSource` is the only class that reads `assets/mock-data.json`. Each top-level collection is parsed independently. UI code talks to `AppController`, which talks to repository interfaces; a future HTTP implementation can replace the local repositories without changing screens. Constructor injection wires dependencies in `main.dart`.
+`AssetMockDataSource` is the only class that reads `assets/mock-data.json`. Each top-level collection is parsed independently. UI code dispatches events to `AppBloc`, which talks to repository interfaces; a future HTTP implementation can replace the local repositories without changing screens. Constructor injection wires dependencies in `main.dart`.
 
-`ChangeNotifier` provides dependency-light state management. `LoadPhase` models initial, loading, success, empty, and error consistently. Mutations and authorization checks live in the controller/repository rather than widgets.
+The app uses the `flutter_bloc` package. `AppBloc` receives explicit authentication, refresh, CRUD, assignment, filtering, connectivity, simulated-error, and theme events and emits immutable `AppState` snapshots. `BlocProvider` injects it and `BlocBuilder`/context watching rebuilds screens. `LoadPhase` models initial, loading, success, empty, and error consistently. Mutations and authorization checks live in the BLoC/repository rather than widgets.
 
 ## Implemented flows
 

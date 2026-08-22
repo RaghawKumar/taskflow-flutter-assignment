@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taskflow/domain/models/models.dart';
 import 'package:taskflow/domain/repositories/repositories.dart';
-import 'package:taskflow/presentation/controllers/app_controller.dart';
+import 'package:taskflow/presentation/controllers/app_bloc.dart';
 import 'package:taskflow/presentation/screens/auth_screens.dart';
 import 'package:taskflow/presentation/widgets/app_scope.dart';
 
 void main() {
   testWidgets('login form displays meaningful validation', (tester) async {
-    final controller = AppController(_FakeAuth(), _FakeRepository());
+    final bloc = AppBloc(_FakeAuth(), _FakeRepository());
     await tester.pumpWidget(
       AppScope(
-        controller: controller,
+        bloc: bloc,
         child: const MaterialApp(home: LoginScreen()),
       ),
     );

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'data/datasources/mock_data_source.dart';
 import 'data/repositories/local_repositories.dart';
 import 'domain/models/models.dart';
-import 'presentation/controllers/app_controller.dart';
+import 'presentation/controllers/app_bloc.dart';
 import 'presentation/screens/auth_screens.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/widgets/app_scope.dart';
@@ -12,7 +13,7 @@ void main() {
   final source = AssetMockDataSource();
   runApp(
     TaskFlowApp(
-      controller: AppController(
+      bloc: AppBloc(
         LocalAuthRepository(source),
         LocalTaskFlowRepository(source),
       ),
@@ -21,8 +22,8 @@ void main() {
 }
 
 class TaskFlowApp extends StatefulWidget {
-  const TaskFlowApp({super.key, required this.controller});
-  final AppController controller;
+  const TaskFlowApp({super.key, required this.bloc});
+  final AppBloc bloc;
   @override
   State<TaskFlowApp> createState() => _TaskFlowAppState();
 }
@@ -31,25 +32,22 @@ class _TaskFlowAppState extends State<TaskFlowApp> {
   @override
   void initState() {
     super.initState();
-    widget.controller.checkSession();
+    widget.bloc.checkSession();
   }
 
   @override
   Widget build(BuildContext context) => AppScope(
-    controller: widget.controller,
-    child: ListenableBuilder(
-      listenable: widget.controller,
-      builder: (context, _) => MaterialApp(
+    bloc: widget.bloc,
+    child: BlocBuilder<AppBloc, AppState>(
+      builder: (context, state) => MaterialApp(
         title: 'TaskFlow',
         debugShowCheckedModeBanner: false,
-        themeMode: widget.controller.darkMode
-            ? ThemeMode.dark
-            : ThemeMode.light,
+        themeMode: state.darkMode ? ThemeMode.dark : ThemeMode.light,
         theme: _theme(Brightness.light),
         darkTheme: _theme(Brightness.dark),
-        home: widget.controller.sessionPhase == LoadPhase.loading
+        home: state.sessionPhase == LoadPhase.loading
             ? const SplashScreen()
-            : widget.controller.session == null
+            : state.session == null
             ? const LoginScreen()
             : const HomeScreen(),
       ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/request_cancellation.dart';
 import '../../../domain/models/models.dart';
 import '../../../domain/repositories/repositories.dart';
 
@@ -93,6 +94,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
           projects: data,
         ),
       );
+    } on RequestCancelledException {
+      // A newer refresh superseded this load; keep the latest state untouched.
     } catch (error) {
       emit(state.copyWith(phase: LoadPhase.error, error: '$error'));
     }

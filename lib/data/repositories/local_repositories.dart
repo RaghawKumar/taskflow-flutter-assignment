@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/request_cancellation.dart';
 import '../../domain/models/models.dart';
 import '../../domain/repositories/repositories.dart';
 import '../datasources/mock_data_source.dart';
@@ -103,6 +104,7 @@ class LocalAuthRepository implements AuthRepository {
 class LocalTaskFlowRepository implements TaskFlowRepository {
   LocalTaskFlowRepository(this.source);
   final MockDataSource source;
+  final Map<String, CancellationToken> _pendingReads = {};
   @override
   bool get offline => source.offline;
   @override
@@ -111,6 +113,19 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
   String? get forcedError => source.forcedError;
   @override
   set forcedError(String? value) => source.forcedError = value;
+
+  Future<void> _cancellableDelay(String channel) async {
+    _pendingReads[channel]?.cancel();
+    final token = CancellationToken();
+    _pendingReads[channel] = token;
+    try {
+      await source.delay(token);
+    } finally {
+      if (identical(_pendingReads[channel], token)) {
+        _pendingReads.remove(channel);
+      }
+    }
+  }
 
   Future<void> _cache(String key, List<Map<String, dynamic>> data) async =>
       (await SharedPreferences.getInstance()).setString(key, jsonEncode(data));
@@ -129,7 +144,7 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
   @override
   Future<List<Project>> projectsForOrg(String orgId) async {
     try {
-      await source.delay();
+      await _cancellableDelay('projects:$orgId');
       final data = (await source.load()).projects
           .where((p) => p.orgId == orgId)
           .toList();
@@ -145,7 +160,7 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
   @override
   Future<List<TaskItem>> tasksForOrg(String orgId) async {
     try {
-      await source.delay();
+      await _cancellableDelay('tasks:$orgId');
       final db = await source.load();
       final ids = db.projects
           .where((p) => p.orgId == orgId)
@@ -163,7 +178,7 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
 
   @override
   Future<List<TaskItem>> tasksForProject(String projectId) async {
-    await source.delay();
+    await _cancellableDelay('project_tasks:$projectId');
     return (await source.load()).tasks
         .where((t) => t.projectId == projectId)
         .toList();
@@ -171,7 +186,7 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
 
   @override
   Future<TaskItem> task(String id) async {
-    await source.delay();
+    await _cancellableDelay('task:$id');
     return (await source.load()).tasks.where((t) => t.id == id).firstOrNull ??
         (throw const AppException('404 — task not found.'));
   }

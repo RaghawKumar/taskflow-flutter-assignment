@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taskflow/data/datasources/mock_data_source.dart';
 import 'package:taskflow/data/repositories/local_repositories.dart';
+import 'package:taskflow/core/request_cancellation.dart';
 import 'package:taskflow/domain/models/models.dart';
 
 void main() {
@@ -73,7 +74,8 @@ void main() {
 
 class _FastAssetSource extends AssetMockDataSource {
   @override
-  Future<void> delay() async {
+  Future<void> delay([CancellationToken? cancellationToken]) async {
+    cancellationToken?.throwIfCancelled();
     if (offline) throw const AppException('Offline');
     if (forcedError != null) throw AppException(forcedError!);
   }

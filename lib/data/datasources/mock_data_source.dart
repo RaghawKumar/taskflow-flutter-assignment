@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
+import '../../core/request_cancellation.dart';
 import '../../domain/models/models.dart';
 
 class MockDatabase {
@@ -26,7 +27,7 @@ abstract interface class MockDataSource {
     String? userId,
   );
   Future<MutationResponse<bool>> removeMembership(String orgId, String userId);
-  Future<void> delay();
+  Future<void> delay([CancellationToken? cancellationToken]);
   bool get offline;
   set offline(bool value);
   String? get forcedError;
@@ -145,10 +146,16 @@ class AssetMockDataSource implements MockDataSource {
   }
 
   @override
-  Future<void> delay() async {
-    await Future<void>.delayed(
-      Duration(milliseconds: 300 + Random().nextInt(501)),
-    );
+  Future<void> delay([CancellationToken? cancellationToken]) async {
+    final total = 300 + Random().nextInt(501);
+    var elapsed = 0;
+    while (elapsed < total) {
+      cancellationToken?.throwIfCancelled();
+      final slice = (total - elapsed).clamp(0, 50);
+      await Future<void>.delayed(Duration(milliseconds: slice));
+      elapsed += slice;
+    }
+    cancellationToken?.throwIfCancelled();
     if (offline)
       throw const AppException(
         'Offline — showing last saved data when available.',

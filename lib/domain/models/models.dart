@@ -58,6 +58,77 @@ class OrgMember {
   );
 }
 
+class TaskComment {
+  const TaskComment({
+    required this.id,
+    required this.taskId,
+    required this.authorId,
+    required this.body,
+    required this.createdAt,
+  });
+  final String id;
+  final String taskId;
+  final String authorId;
+  final String body;
+  final DateTime createdAt;
+
+  factory TaskComment.fromJson(Map<String, dynamic> json) => TaskComment(
+    id: json['id'],
+    taskId: json['task_id'],
+    authorId: json['author_id'],
+    body: json['body'],
+    createdAt: DateTime.parse(json['created_at']),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'task_id': taskId,
+    'author_id': authorId,
+    'body': body,
+    'created_at': createdAt.toIso8601String(),
+  };
+}
+
+class TaskNotification {
+  const TaskNotification({
+    required this.id,
+    required this.userId,
+    required this.type,
+    required this.taskId,
+    required this.message,
+    required this.read,
+    required this.createdAt,
+  });
+  final String id;
+  final String userId;
+  final String type;
+  final String taskId;
+  final String message;
+  final bool read;
+  final DateTime createdAt;
+
+  factory TaskNotification.fromJson(Map<String, dynamic> json) =>
+      TaskNotification(
+        id: json['id'],
+        userId: json['user_id'],
+        type: json['type'],
+        taskId: json['task_id'],
+        message: json['message'],
+        read: json['read'],
+        createdAt: DateTime.parse(json['created_at']),
+      );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'user_id': userId,
+    'type': type,
+    'task_id': taskId,
+    'message': message,
+    'read': read,
+    'created_at': createdAt.toIso8601String(),
+  };
+}
+
 class Project {
   const Project({
     required this.id,

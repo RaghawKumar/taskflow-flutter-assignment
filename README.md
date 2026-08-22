@@ -21,7 +21,7 @@ lib/
     └── widgets/              injected controller scope
 ```
 
-`AssetMockDataSource` is the only class that reads `assets/mock-data.json`. Each top-level collection is parsed independently. UI code dispatches events to `AppBloc`, which talks to repository interfaces; a future HTTP implementation can replace the local repositories without changing screens. Constructor injection wires dependencies in `main.dart`.
+`AssetMockDataSource` is the only class that reads `assets/mock-data.json`. Every top-level entity collection is parsed independently into typed organizations, users, organization members, projects, tasks, comments, notifications, credentials, and token data. UI code dispatches events to `AppBloc`, which talks to repository interfaces; a future HTTP implementation can replace the local repositories without changing screens. Constructor injection wires dependencies in `main.dart`.
 
 The app uses the `flutter_bloc` package. `AppBloc` receives explicit authentication, refresh, CRUD, assignment, filtering, connectivity, simulated-error, and theme events and emits immutable `AppState` snapshots. `BlocProvider` injects it and `BlocBuilder`/context watching rebuilds screens. `LoadPhase` models initial, loading, success, empty, and error consistently. Mutations and authorization checks live in the BLoC/repository rather than widgets.
 

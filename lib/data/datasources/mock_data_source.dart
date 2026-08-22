@@ -9,6 +9,8 @@ class MockDatabase {
   List<OrgMember> members = [];
   List<Project> projects = [];
   List<TaskItem> tasks = [];
+  List<TaskComment> comments = [];
+  List<TaskNotification> notifications = [];
   List<Map<String, dynamic>> credentials = [];
   late AuthTokens tokens;
 }
@@ -41,6 +43,8 @@ class AssetMockDataSource implements MockDataSource {
     db.members = _parse(root['org_members'], OrgMember.fromJson);
     db.projects = _parse(root['projects'], Project.fromJson);
     db.tasks = _parse(root['tasks'], TaskItem.fromJson);
+    db.comments = _parse(root['comments'], TaskComment.fromJson);
+    db.notifications = _parse(root['notifications'], TaskNotification.fromJson);
     final auth = root['auth_mock'] as Map<String, dynamic>;
     db.credentials = List<Map<String, dynamic>>.from(auth['test_credentials']);
     final token = auth['mock_login_response'] as Map<String, dynamic>;

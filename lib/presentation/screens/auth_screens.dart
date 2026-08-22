@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/validators.dart';
-import '../widgets/app_scope.dart';
+import '../../domain/models/models.dart';
+import '../blocs/auth/auth_bloc.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -44,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
+    final auth = context.watch<AuthBloc>();
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -97,11 +99,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    if (app.error != null)
+                    if (auth.state.error != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
                         child: Text(
-                          app.error!,
+                          auth.state.error!,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
                           ),
@@ -110,13 +112,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     FilledButton(
                       key: const Key('login_button'),
-                      onPressed: app.sessionPhase.name == 'loading'
+                      onPressed: auth.state.phase == LoadPhase.loading
                           ? null
                           : () {
                               if (form.currentState!.validate())
-                                app.login(email.text, password.text);
+                                auth.login(email.text, password.text);
                             },
-                      child: app.sessionPhase.name == 'loading'
+                      child: auth.state.phase == LoadPhase.loading
                           ? const SizedBox.square(
                               dimension: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
@@ -204,10 +206,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: FilledButton(
                     onPressed: () async {
                       if (!form.currentState!.validate()) return;
-                      await AppScope.of(
-                        context,
-                        listen: false,
-                      ).register(name.text, email.text, password.text);
+                      await context.read<AuthBloc>().register(
+                        name.text,
+                        email.text,
+                        password.text,
+                      );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

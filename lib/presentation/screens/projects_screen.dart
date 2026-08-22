@@ -1,24 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
 import '../../domain/models/models.dart';
-import '../widgets/app_scope.dart';
+import '../blocs/auth/auth_bloc.dart';
+import '../blocs/projects/projects_bloc.dart';
+import '../blocs/tasks/tasks_bloc.dart';
 import 'task_detail_screen.dart';
 
 class ProjectsScreen extends StatelessWidget {
   const ProjectsScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
+    final projectsBloc = context.watch<ProjectsBloc>();
+    final state = projectsBloc.state;
+    final session = context.watch<AuthBloc>().state.session!;
+    final tasksBloc = context.watch<TasksBloc>();
     Widget body;
-    if (app.dataPhase == LoadPhase.loading) {
+    if (state.phase == LoadPhase.loading) {
       body = const Center(child: CircularProgressIndicator());
-    } else if (app.dataPhase == LoadPhase.error) {
+    } else if (state.phase == LoadPhase.error) {
       body = _State(
         icon: Icons.cloud_off,
-        text: app.error ?? 'Could not load projects',
-        onRetry: app.loadAll,
+        text: state.error ?? 'Could not load projects',
+        onRetry: () => projectsBloc.load(session.orgId),
       );
-    } else if (app.dataPhase == LoadPhase.empty) {
+    } else if (state.phase == LoadPhase.empty) {
       body = _State(
         icon: Icons.folder_off_outlined,
         text: 'No projects yet',
@@ -29,7 +35,7 @@ class ProjectsScreen extends StatelessWidget {
         builder: (context, constraints) {
           final columns = Responsive.columns(context);
           return RefreshIndicator(
-            onRefresh: app.loadAll,
+            onRefresh: () => projectsBloc.load(session.orgId),
             child: GridView.builder(
               padding: Responsive.listPadding(context, maxWidth: 1280),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -38,9 +44,9 @@ class ProjectsScreen extends StatelessWidget {
                 mainAxisSpacing: 12,
                 mainAxisExtent: Responsive.isCompact(context) ? 150 : 175,
               ),
-              itemCount: app.projects.length,
+              itemCount: state.projects.length,
               itemBuilder: (context, index) {
-                final p = app.projects[index];
+                final p = state.projects[index];
                 return Card(
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
@@ -54,7 +60,7 @@ class ProjectsScreen extends StatelessWidget {
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        '${p.description}\n${app.taskCount(p.id)} tasks',
+                        '${p.description}\n${tasksBloc.countForProject(p.id)} tasks',
                         maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -73,14 +79,17 @@ class ProjectsScreen extends StatelessWidget {
                         if (value == 'delete' &&
                             await confirmDelete(context, p.name) &&
                             context.mounted) {
-                          final ok = await app.deleteProject(p.id);
+                          final ok = await projectsBloc.delete(
+                            p.id,
+                            isAdmin: session.isAdmin,
+                          );
                           if (!ok && context.mounted)
-                            showError(context, app.error!);
+                            showError(context, projectsBloc.state.error!);
                         }
                       },
                       itemBuilder: (_) => [
                         const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                        if (app.session!.isAdmin)
+                        if (session.isAdmin)
                           const PopupMenuItem(
                             value: 'delete',
                             child: Text('Delete'),
@@ -111,8 +120,11 @@ class ProjectDetailsScreen extends StatelessWidget {
   final Project project;
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
-    final tasks = app.tasks.where((t) => t.projectId == project.id).toList();
+    final tasksBloc = context.watch<TasksBloc>();
+    final session = context.watch<AuthBloc>().state.session!;
+    final tasks = tasksBloc.state.tasks
+        .where((t) => t.projectId == project.id)
+        .toList();
     return Scaffold(
       appBar: AppBar(
         title: Text(project.name),
@@ -134,7 +146,7 @@ class ProjectDetailsScreen extends StatelessWidget {
         label: const Text('Task'),
       ),
       body: RefreshIndicator(
-        onRefresh: app.loadAll,
+        onRefresh: () => tasksBloc.load(session.orgId),
         child: ListView(
           padding: Responsive.listPadding(context),
           children: [
@@ -184,61 +196,124 @@ class ProjectDetailsScreen extends StatelessWidget {
 }
 
 Future<void> showProjectForm(BuildContext context, {Project? project}) async {
-  final form = GlobalKey<FormState>();
-  final name = TextEditingController(text: project?.name);
-  final description = TextEditingController(text: project?.description);
-  final app = AppScope.of(context, listen: false);
+  final projectsBloc = context.read<ProjectsBloc>();
+  final session = context.read<AuthBloc>().state.session!;
   await showDialog(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(project == null ? 'New project' : 'Edit project'),
-      content: SizedBox(
-        width: 420,
+    builder: (_) => ProjectFormDialog(
+      project: project,
+      orgId: session.orgId,
+      projectsBloc: projectsBloc,
+    ),
+  );
+}
+
+class ProjectFormDialog extends StatefulWidget {
+  const ProjectFormDialog({
+    super.key,
+    required this.orgId,
+    required this.projectsBloc,
+    this.project,
+  });
+  final String orgId;
+  final ProjectsBloc projectsBloc;
+  final Project? project;
+
+  @override
+  State<ProjectFormDialog> createState() => _ProjectFormDialogState();
+}
+
+class _ProjectFormDialogState extends State<ProjectFormDialog> {
+  final form = GlobalKey<FormState>();
+  late final TextEditingController name;
+  late final TextEditingController description;
+  bool saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    name = TextEditingController(text: widget.project?.name);
+    description = TextEditingController(text: widget.project?.description);
+  }
+
+  @override
+  void dispose() {
+    name.dispose();
+    description.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.project == null ? 'New project' : 'Edit project'),
+    content: SizedBox(
+      width: 420,
+      child: SingleChildScrollView(
         child: Form(
           key: form,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
+                key: const Key('project_name'),
                 controller: name,
-                validator: (v) => v == null || v.trim().isEmpty
+                autofocus: true,
+                textInputAction: TextInputAction.next,
+                validator: (value) => value == null || value.trim().isEmpty
                     ? 'Project name is required.'
                     : null,
                 decoration: const InputDecoration(labelText: 'Name'),
               ),
               const SizedBox(height: 12),
               TextFormField(
+                key: const Key('project_description'),
                 controller: description,
-                maxLines: 3,
+                minLines: 2,
+                maxLines: 4,
                 decoration: const InputDecoration(labelText: 'Description'),
               ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () async {
-            if (!form.currentState!.validate()) return;
-            final ok = await app.saveProject(
-              ProjectRequest(name: name.text, description: description.text),
-              id: project?.id,
-            );
-            if (dialogContext.mounted && ok) Navigator.pop(dialogContext);
-            if (dialogContext.mounted && !ok)
-              showError(dialogContext, app.error!);
-          },
-          child: const Text('Save'),
-        ),
-      ],
     ),
+    actions: [
+      TextButton(
+        onPressed: saving ? null : () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      FilledButton(
+        key: const Key('save_project'),
+        onPressed: saving ? null : _save,
+        child: saving
+            ? const SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text('Save'),
+      ),
+    ],
   );
-  name.dispose();
-  description.dispose();
+
+  Future<void> _save() async {
+    if (!form.currentState!.validate()) return;
+    setState(() => saving = true);
+    final ok = await widget.projectsBloc.save(
+      widget.orgId,
+      ProjectRequest(name: name.text, description: description.text),
+      id: widget.project?.id,
+    );
+    if (!mounted) return;
+    if (ok) {
+      Navigator.pop(context);
+    } else {
+      setState(() => saving = false);
+      showError(
+        context,
+        widget.projectsBloc.state.error ?? 'Could not save project.',
+      );
+    }
+  }
 }
 
 Future<bool> confirmDelete(BuildContext context, String name) async =>

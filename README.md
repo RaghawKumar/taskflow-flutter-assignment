@@ -16,14 +16,18 @@ lib/
 │   ├── models/               entities, requests, filters and state enums
 │   └── repositories/         backend-independent interfaces
 └── presentation/
-    ├── controllers/          flutter_bloc events, immutable state, business logic
+    ├── blocs/
+    │   ├── auth/             session, login, registration and logout
+    │   ├── projects/         project loading and mutations
+    │   ├── tasks/            tasks, members, filters and assignment
+    │   └── settings/         theme and debug connectivity controls
     ├── screens/              auth, dashboard, projects, tasks, settings
     └── widgets/              injected controller scope
 ```
 
-`AssetMockDataSource` is the only class that reads `assets/mock-data.json`. Every top-level entity collection is parsed independently into typed organizations, users, organization members, projects, tasks, comments, notifications, credentials, and token data. UI code dispatches events to `AppBloc`, which talks to repository interfaces; a future HTTP implementation can replace the local repositories without changing screens. Constructor injection wires dependencies in `main.dart`.
+`AssetMockDataSource` is the only class that reads `assets/mock-data.json`. Every top-level entity collection is parsed independently into typed organizations, users, organization members, projects, tasks, comments, notifications, credentials, and token data. UI code dispatches events to feature-specific BLoCs, which talk to repository interfaces; a future HTTP implementation can replace the local repositories without changing screens. Constructor injection wires dependencies in `main.dart`.
 
-The app uses the `flutter_bloc` package. `AppBloc` receives explicit authentication, refresh, CRUD, assignment, filtering, connectivity, simulated-error, and theme events and emits immutable `AppState` snapshots. `BlocProvider` injects it and `BlocBuilder`/context watching rebuilds screens. `LoadPhase` models initial, loading, success, empty, and error consistently. Mutations and authorization checks live in the BLoC/repository rather than widgets.
+The app uses the `flutter_bloc` package with bounded feature ownership: `AuthBloc`, `ProjectsBloc`, `TasksBloc`, and `SettingsCubit`. `MultiBlocProvider` injects them, an authentication listener coordinates organization-scoped initial loads, and screens watch only the feature state they need. `LoadPhase` models initial, loading, success, empty, and error consistently. Mutations and authorization checks live in BLoCs/repositories rather than widgets.
 
 ## Implemented flows
 
@@ -79,7 +83,7 @@ The release APK is written to `build/app/outputs/flutter-apk/app-release.apk`.
 
 ## Tests
 
-Unit coverage includes validation, multi-dimensional task filtering, BLoC authentication success/failure, data loading success/error/retry, and protected-mutation failures. Widget coverage includes login form validation and responsive breakpoints. The `integration_test` device-suite entry point is isolated from the unit suite and ready for device-driven flows. Tests use fakes and never require a network.
+Unit coverage includes validation, multi-dimensional task filtering, feature-BLoC authentication, project loading/error recovery, task filtering, and mock-data parsing. Widget coverage includes login form validation and responsive breakpoints. The `integration_test` device-suite entry point is isolated from the unit suite and ready for device-driven flows. Tests use fakes and never require a network.
 
 ## Technical decisions and limitations
 

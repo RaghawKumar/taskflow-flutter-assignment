@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
+import '../blocs/auth/auth_bloc.dart';
+import '../blocs/projects/projects_bloc.dart';
+import '../blocs/settings/settings_cubit.dart';
+import '../blocs/tasks/tasks_bloc.dart';
 import 'projects_screen.dart';
 import 'tasks_screen.dart';
 import 'settings_screen.dart';
-import '../widgets/app_scope.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int index = 0;
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
+    final settings = context.watch<SettingsCubit>().state;
     final pages = [
       const DashboardPage(),
       const ProjectsScreen(),
@@ -79,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-      bottomSheet: app.offline
+      bottomSheet: settings.offline
           ? const Material(
               color: Colors.orange,
               child: SafeArea(
@@ -102,17 +106,25 @@ class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
-    final done = app.tasks.where((t) => t.status.name == 'done').length;
+    final session = context.watch<AuthBloc>().state.session!;
+    final projects = context.watch<ProjectsBloc>().state.projects;
+    final tasksState = context.watch<TasksBloc>().state;
+    final tasks = tasksState.tasks;
+    final done = tasks.where((t) => t.status.name == 'done').length;
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
       body: RefreshIndicator(
-        onRefresh: app.loadAll,
+        onRefresh: () async {
+          await Future.wait([
+            context.read<ProjectsBloc>().load(session.orgId),
+            context.read<TasksBloc>().load(session.orgId),
+          ]);
+        },
         child: ListView(
           padding: Responsive.listPadding(context),
           children: [
             Text(
-              'Hello, ${app.session!.user.name.split(' ').first}',
+              'Hello, ${session.user.name.split(' ').first}',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 4),
@@ -137,14 +149,14 @@ class DashboardPage extends StatelessWidget {
                     _Metric(
                       icon: Icons.folder_rounded,
                       label: 'Projects',
-                      value: '${app.projects.length}',
+                      value: '${projects.length}',
                       background: scheme.primaryContainer,
                       foreground: scheme.onPrimaryContainer,
                     ),
                     _Metric(
                       icon: Icons.task_alt_rounded,
                       label: 'Tasks',
-                      value: '${app.tasks.length}',
+                      value: '${tasks.length}',
                       background: scheme.secondaryContainer,
                       foreground: scheme.onSecondaryContainer,
                     ),
@@ -158,7 +170,7 @@ class DashboardPage extends StatelessWidget {
                     _Metric(
                       icon: Icons.group_rounded,
                       label: 'Members',
-                      value: '${app.members.length}',
+                      value: '${tasksState.members.length}',
                       background: scheme.surfaceContainerHighest,
                       foreground: scheme.onSurfaceVariant,
                     ),
@@ -175,7 +187,7 @@ class DashboardPage extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  '${app.tasks.where((t) => t.status.name != 'done').length} open',
+                  '${tasks.where((t) => t.status.name != 'done').length} open',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                   ),
@@ -183,7 +195,7 @@ class DashboardPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            if (app.tasks.every((t) => t.status.name == 'done'))
+            if (tasks.every((t) => t.status.name == 'done'))
               const Card(
                 child: Padding(
                   padding: EdgeInsets.all(24),
@@ -192,7 +204,7 @@ class DashboardPage extends StatelessWidget {
                   ),
                 ),
               ),
-            ...app.tasks
+            ...tasks
                 .where((t) => t.status.name != 'done')
                 .take(5)
                 .map(

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
 import '../../domain/models/models.dart';
-import '../widgets/app_scope.dart';
+import '../blocs/tasks/tasks_bloc.dart';
 import 'projects_screen.dart';
 
 class TaskDetailScreen extends StatelessWidget {
@@ -9,8 +10,8 @@ class TaskDetailScreen extends StatelessWidget {
   final String taskId;
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
-    final matches = app.tasks.where((t) => t.id == taskId);
+    final bloc = context.watch<TasksBloc>();
+    final matches = bloc.state.tasks.where((t) => t.id == taskId);
     if (matches.isEmpty)
       return const Scaffold(body: Center(child: Text('404 — task not found.')));
     final task = matches.first;
@@ -31,7 +32,7 @@ class TaskDetailScreen extends StatelessWidget {
           IconButton(
             onPressed: () async {
               if (await confirmDelete(context, task.title)) {
-                final ok = await app.deleteTask(task.id);
+                final ok = await bloc.delete(task.id);
                 if (context.mounted && ok) Navigator.pop(context);
               }
             },
@@ -60,7 +61,7 @@ class TaskDetailScreen extends StatelessWidget {
                 .toList(),
             onChanged: (v) {
               if (v != null)
-                app.saveTask(
+                bloc.save(
                   task.projectId,
                   _request(task.copyWith(status: v)),
                   id: task.id,
@@ -81,7 +82,7 @@ class TaskDetailScreen extends StatelessWidget {
                 .toList(),
             onChanged: (v) {
               if (v != null)
-                app.saveTask(
+                bloc.save(
                   task.projectId,
                   _request(task.copyWith(priority: v)),
                   id: task.id,
@@ -94,11 +95,11 @@ class TaskDetailScreen extends StatelessWidget {
             decoration: const InputDecoration(labelText: 'Assignee'),
             items: [
               const DropdownMenuItem(value: null, child: Text('Unassigned')),
-              ...app.members.map(
+              ...bloc.state.members.map(
                 (u) => DropdownMenuItem(value: u.id, child: Text(u.name)),
               ),
             ],
-            onChanged: (v) => app.assign(task.id, v),
+            onChanged: (v) => bloc.assign(task.id, v),
           ),
           const SizedBox(height: 20),
           ListTile(
@@ -160,7 +161,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
+    final bloc = context.watch<TasksBloc>();
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.task == null ? 'Create task' : 'Edit task'),
@@ -224,7 +225,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                         value: null,
                         child: Text('Unassigned'),
                       ),
-                      ...app.members.map(
+                      ...bloc.state.members.map(
                         (u) =>
                             DropdownMenuItem(value: u.id, child: Text(u.name)),
                       ),
@@ -258,7 +259,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     child: FilledButton(
                       onPressed: () async {
                         if (!form.currentState!.validate()) return;
-                        final ok = await app.saveTask(
+                        final ok = await bloc.save(
                           widget.projectId,
                           TaskRequest(
                             title: title.text,
@@ -272,7 +273,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                         );
                         if (context.mounted && ok) Navigator.pop(context);
                         if (context.mounted && !ok)
-                          showError(context, app.error!);
+                          showError(context, bloc.state.error!);
                       },
                       child: const Text('Save task'),
                     ),

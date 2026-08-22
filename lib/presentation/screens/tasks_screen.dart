@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
 import '../../domain/models/models.dart';
-import '../widgets/app_scope.dart';
+import '../blocs/auth/auth_bloc.dart';
+import '../blocs/projects/projects_bloc.dart';
+import '../blocs/tasks/tasks_bloc.dart';
 import 'task_detail_screen.dart';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
-    final tasks = app.filteredTasks;
+    final bloc = context.watch<TasksBloc>();
+    final state = bloc.state;
+    final session = context.watch<AuthBloc>().state.session!;
+    final projects = context.watch<ProjectsBloc>().state.projects;
+    final tasks = state.filtered;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tasks'),
@@ -20,22 +26,22 @@ class TasksScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: app.projects.isEmpty
+      floatingActionButton: projects.isEmpty
           ? null
           : FloatingActionButton(
               onPressed: () => showProjectPicker(context),
               child: const Icon(Icons.add),
             ),
-      body: app.dataPhase == LoadPhase.loading
+      body: state.phase == LoadPhase.loading
           ? const Center(child: CircularProgressIndicator())
-          : app.dataPhase == LoadPhase.error
+          : state.phase == LoadPhase.error
           ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(app.error ?? 'Failed to load'),
+                  Text(state.error ?? 'Failed to load'),
                   TextButton(
-                    onPressed: app.loadAll,
+                    onPressed: () => bloc.load(session.orgId),
                     child: const Text('Retry'),
                   ),
                 ],
@@ -44,7 +50,7 @@ class TasksScreen extends StatelessWidget {
           : tasks.isEmpty
           ? const Center(child: Text('No tasks match these filters.'))
           : RefreshIndicator(
-              onRefresh: app.loadAll,
+              onRefresh: () => bloc.load(session.orgId),
               child: ListView.builder(
                 key: const Key('task_list'),
                 padding: Responsive.listPadding(context, maxWidth: 920),
@@ -61,8 +67,8 @@ class TaskCard extends StatelessWidget {
   final TaskItem task;
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
-    final assignee = app.userName(task.assigneeId);
+    final bloc = context.watch<TasksBloc>();
+    final assignee = bloc.userName(task.assigneeId);
     return Card(
       child: ListTile(
         contentPadding: const EdgeInsets.all(14),
@@ -105,7 +111,7 @@ class TaskCard extends StatelessWidget {
 }
 
 Future<void> showProjectPicker(BuildContext context) async {
-  final app = AppScope.of(context, listen: false);
+  final projects = context.read<ProjectsBloc>().state.projects;
   final project = await showModalBottomSheet<Project>(
     context: context,
     builder: (_) => SafeArea(
@@ -113,7 +119,7 @@ Future<void> showProjectPicker(BuildContext context) async {
         shrinkWrap: true,
         children: [
           const ListTile(title: Text('Choose a project')),
-          ...app.projects.map(
+          ...projects.map(
             (p) => ListTile(
               title: Text(p.name),
               onTap: () => Navigator.pop(context, p),
@@ -131,12 +137,12 @@ Future<void> showProjectPicker(BuildContext context) async {
 }
 
 Future<void> showFilters(BuildContext context) async {
-  final app = AppScope.of(context, listen: false);
-  TaskStatus? status = app.filter.status;
-  TaskPriority? priority = app.filter.priority;
-  String? assignee = app.filter.assigneeId;
-  DateTime? from = app.filter.from;
-  DateTime? to = app.filter.to;
+  final bloc = context.read<TasksBloc>();
+  TaskStatus? status = bloc.state.filter.status;
+  TaskPriority? priority = bloc.state.filter.priority;
+  String? assignee = bloc.state.filter.assigneeId;
+  DateTime? from = bloc.state.filter.from;
+  DateTime? to = bloc.state.filter.to;
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -195,7 +201,7 @@ Future<void> showFilters(BuildContext context) async {
                     decoration: const InputDecoration(labelText: 'Assignee'),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('Any')),
-                      ...app.members.map(
+                      ...bloc.state.members.map(
                         (u) =>
                             DropdownMenuItem(value: u.id, child: Text(u.name)),
                       ),
@@ -249,7 +255,7 @@ Future<void> showFilters(BuildContext context) async {
                     children: [
                       TextButton(
                         onPressed: () {
-                          app.setFilter(const TaskFilter());
+                          bloc.setFilter(const TaskFilter());
                           Navigator.pop(sheetContext);
                         },
                         child: const Text('Clear'),
@@ -257,7 +263,7 @@ Future<void> showFilters(BuildContext context) async {
                       const Spacer(),
                       FilledButton(
                         onPressed: () {
-                          app.setFilter(
+                          bloc.setFilter(
                             TaskFilter(
                               status: status,
                               priority: priority,

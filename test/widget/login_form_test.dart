@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taskflow/domain/models/models.dart';
 import 'package:taskflow/domain/repositories/repositories.dart';
-import 'package:taskflow/presentation/controllers/app_bloc.dart';
+import 'package:taskflow/presentation/blocs/auth/auth_bloc.dart';
 import 'package:taskflow/presentation/screens/auth_screens.dart';
-import 'package:taskflow/presentation/widgets/app_scope.dart';
 
 void main() {
   testWidgets('login form displays meaningful validation', (tester) async {
-    final bloc = AppBloc(_FakeAuth(), _FakeRepository());
+    final bloc = AuthBloc(_FakeAuth());
+    addTearDown(bloc.close);
     await tester.pumpWidget(
-      AppScope(
-        bloc: bloc,
+      BlocProvider.value(
+        value: bloc,
         child: const MaterialApp(home: LoginScreen()),
       ),
     );
@@ -31,40 +32,4 @@ class _FakeAuth implements AuthRepository {
   Future<Session> refresh(Session session) async => session;
   @override
   Future<Session?> restoreSession() async => null;
-}
-
-class _FakeRepository implements TaskFlowRepository {
-  @override
-  bool offline = false;
-  @override
-  String? forcedError;
-  @override
-  Future<TaskItem> assignTask(String taskId, String? userId, String orgId) =>
-      throw UnimplementedError();
-  @override
-  Future<void> deleteProject(String id, {required bool isAdmin}) async {}
-  @override
-  Future<void> deleteTask(String id) async {}
-  @override
-  Future<List<AppUser>> membersForOrg(String orgId) async => [];
-  @override
-  Future<List<Project>> projectsForOrg(String orgId) async => [];
-  @override
-  Future<Project> saveProject(
-    String orgId,
-    ProjectRequest request, {
-    String? id,
-  }) => throw UnimplementedError();
-  @override
-  Future<TaskItem> saveTask(
-    String projectId,
-    TaskRequest request, {
-    String? id,
-  }) => throw UnimplementedError();
-  @override
-  Future<TaskItem> task(String id) => throw UnimplementedError();
-  @override
-  Future<List<TaskItem>> tasksForOrg(String orgId) async => [];
-  @override
-  Future<List<TaskItem>> tasksForProject(String projectId) async => [];
 }

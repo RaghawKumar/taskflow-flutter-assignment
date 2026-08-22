@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:taskflow/core/app_localizations.dart';
 import 'package:taskflow/domain/models/models.dart';
 import 'package:taskflow/domain/repositories/repositories.dart';
 import 'package:taskflow/presentation/blocs/auth/auth_bloc.dart';
@@ -13,7 +15,16 @@ void main() {
     await tester.pumpWidget(
       BlocProvider.value(
         value: bloc,
-        child: const MaterialApp(home: LoginScreen()),
+        child: const MaterialApp(
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: LoginScreen(),
+        ),
       ),
     );
     await tester.tap(find.byKey(const Key('login_button')));

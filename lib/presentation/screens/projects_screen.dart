@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
+import '../../core/app_localizations.dart';
 import '../../domain/models/models.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/projects/projects_bloc.dart';
 import '../blocs/tasks/tasks_bloc.dart';
+import '../widgets/skeleton_loading.dart';
 import 'task_detail_screen.dart';
 
 class ProjectsScreen extends StatelessWidget {
@@ -17,7 +19,7 @@ class ProjectsScreen extends StatelessWidget {
     final tasksBloc = context.watch<TasksBloc>();
     Widget body;
     if (state.phase == LoadPhase.loading) {
-      body = const Center(child: CircularProgressIndicator());
+      body = const SkeletonList();
     } else if (state.phase == LoadPhase.error) {
       body = _State(
         icon: Icons.cloud_off,
@@ -47,54 +49,60 @@ class ProjectsScreen extends StatelessWidget {
               itemCount: state.projects.length,
               itemBuilder: (context, index) {
                 final p = state.projects[index];
-                return Card(
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    leading: const CircleAvatar(
-                      child: Icon(Icons.folder_outlined),
-                    ),
-                    title: Text(
-                      p.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        '${p.description}\n${tasksBloc.countForProject(p.id)} tasks',
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
+                return FadeSlideIn(
+                  delay: Duration(milliseconds: index * 45),
+                  child: Card(
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      leading: const CircleAvatar(
+                        child: Icon(Icons.folder_outlined),
                       ),
-                    ),
-                    isThreeLine: true,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ProjectDetailsScreen(project: p),
+                      title: Text(
+                        p.name,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                    ),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (value) async {
-                        if (value == 'edit')
-                          showProjectForm(context, project: p);
-                        if (value == 'delete' &&
-                            await confirmDelete(context, p.name) &&
-                            context.mounted) {
-                          final ok = await projectsBloc.delete(
-                            p.id,
-                            actorUserId: session.user.id,
-                          );
-                          if (!ok && context.mounted)
-                            showError(context, projectsBloc.state.error!);
-                        }
-                      },
-                      itemBuilder: (_) => [
-                        const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                        if (session.isAdmin)
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          '${p.description}\n${tasksBloc.countForProject(p.id)} tasks',
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      isThreeLine: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ProjectDetailsScreen(project: p),
+                        ),
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) async {
+                          if (value == 'edit')
+                            showProjectForm(context, project: p);
+                          if (value == 'delete' &&
+                              await confirmDelete(context, p.name) &&
+                              context.mounted) {
+                            final ok = await projectsBloc.delete(
+                              p.id,
+                              actorUserId: session.user.id,
+                            );
+                            if (!ok && context.mounted)
+                              showError(context, projectsBloc.state.error!);
+                          }
+                        },
+                        itemBuilder: (_) => [
                           const PopupMenuItem(
-                            value: 'delete',
-                            child: Text('Delete'),
+                            value: 'edit',
+                            child: Text('Edit'),
                           ),
-                      ],
+                          if (session.isAdmin)
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete'),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -105,7 +113,7 @@ class ProjectsScreen extends StatelessWidget {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('Projects')),
+      appBar: AppBar(title: Text(context.l10n.text('projects'))),
       floatingActionButton: FloatingActionButton(
         onPressed: () => showProjectForm(context),
         child: const Icon(Icons.add),

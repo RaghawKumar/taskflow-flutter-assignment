@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
+import '../../core/app_localizations.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/projects/projects_bloc.dart';
 import '../blocs/settings/settings_cubit.dart';
@@ -54,7 +55,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-        Expanded(child: pages[index]),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 280),
+            switchInCurve: Curves.easeOutCubic,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween(
+                  begin: const Offset(.025, 0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
+            child: KeyedSubtree(key: ValueKey(index), child: pages[index]),
+          ),
+        ),
       ],
     );
     return Scaffold(
@@ -64,36 +81,34 @@ class _HomeScreenState extends State<HomeScreen> {
           : NavigationBar(
               selectedIndex: index,
               onDestinationSelected: (v) => setState(() => index = v),
-              destinations: const [
+              destinations: [
                 NavigationDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  label: 'Home',
+                  icon: const Icon(Icons.dashboard_outlined),
+                  label: context.l10n.text('home'),
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.folder_outlined),
-                  label: 'Projects',
+                  icon: const Icon(Icons.folder_outlined),
+                  label: context.l10n.text('projects'),
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.task_alt),
-                  label: 'Tasks',
+                  icon: const Icon(Icons.task_alt),
+                  label: context.l10n.text('tasks'),
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  label: 'Settings',
+                  icon: const Icon(Icons.settings_outlined),
+                  label: context.l10n.text('settings'),
                 ),
               ],
             ),
       bottomSheet: settings.offline
-          ? const Material(
+          ? Material(
               color: Colors.orange,
               child: SafeArea(
                 top: false,
                 child: SizedBox(
                   height: 28,
                   width: double.infinity,
-                  child: Center(
-                    child: Text('Offline • cached data may be stale'),
-                  ),
+                  child: Center(child: Text(context.l10n.text('offline'))),
                 ),
               ),
             )
@@ -112,7 +127,7 @@ class DashboardPage extends StatelessWidget {
     final tasks = tasksState.tasks;
     final done = tasks.where((t) => t.status.name == 'done').length;
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(title: Text(context.l10n.text('dashboard'))),
       body: RefreshIndicator(
         onRefresh: () async {
           await Future.wait([
@@ -148,28 +163,28 @@ class DashboardPage extends StatelessWidget {
                   children: [
                     _Metric(
                       icon: Icons.folder_rounded,
-                      label: 'Projects',
+                      label: context.l10n.text('projects'),
                       value: '${projects.length}',
                       background: scheme.primaryContainer,
                       foreground: scheme.onPrimaryContainer,
                     ),
                     _Metric(
                       icon: Icons.task_alt_rounded,
-                      label: 'Tasks',
+                      label: context.l10n.text('tasks'),
                       value: '${tasks.length}',
                       background: scheme.secondaryContainer,
                       foreground: scheme.onSecondaryContainer,
                     ),
                     _Metric(
                       icon: Icons.check_circle_rounded,
-                      label: 'Completed',
+                      label: context.l10n.text('completed'),
                       value: '$done',
                       background: scheme.tertiaryContainer,
                       foreground: scheme.onTertiaryContainer,
                     ),
                     _Metric(
                       icon: Icons.group_rounded,
-                      label: 'Members',
+                      label: context.l10n.text('members'),
                       value: '${tasksState.members.length}',
                       background: scheme.surfaceContainerHighest,
                       foreground: scheme.onSurfaceVariant,
@@ -182,7 +197,7 @@ class DashboardPage extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'Upcoming tasks',
+                  context.l10n.text('upcoming'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const Spacer(),
@@ -253,35 +268,39 @@ class _Metric extends StatelessWidget {
   final String label, value;
   final Color background, foreground;
   @override
-  Widget build(BuildContext context) => Card(
-    color: background,
-    clipBehavior: Clip.antiAlias,
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, color: foreground, size: 26),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: foreground,
-                  fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) => Semantics(
+    label: '$label: $value',
+    readOnly: true,
+    child: Card(
+      color: background,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Icon(icon, color: foreground, size: 26),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: foreground),
-              ),
-            ],
-          ),
-        ],
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: foreground),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     ),
   );

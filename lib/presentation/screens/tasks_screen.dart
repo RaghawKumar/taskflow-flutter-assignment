@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
+import '../../core/app_localizations.dart';
 import '../../domain/models/models.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/projects/projects_bloc.dart';
 import '../blocs/tasks/tasks_bloc.dart';
+import '../widgets/skeleton_loading.dart';
 import 'task_detail_screen.dart';
 
 class TasksScreen extends StatelessWidget {
@@ -18,7 +20,7 @@ class TasksScreen extends StatelessWidget {
     final tasks = state.filtered;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tasks'),
+        title: Text(context.l10n.text('tasks')),
         actions: [
           IconButton(
             onPressed: () => showFilters(context),
@@ -33,7 +35,7 @@ class TasksScreen extends StatelessWidget {
               child: const Icon(Icons.add),
             ),
       body: state.phase == LoadPhase.loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonList()
           : state.phase == LoadPhase.error
           ? Center(
               child: Column(
@@ -55,7 +57,10 @@ class TasksScreen extends StatelessWidget {
                 key: const Key('task_list'),
                 padding: Responsive.listPadding(context, maxWidth: 920),
                 itemCount: tasks.length,
-                itemBuilder: (context, i) => TaskCard(task: tasks[i]),
+                itemBuilder: (context, i) => FadeSlideIn(
+                  delay: Duration(milliseconds: i * 35),
+                  child: TaskCard(task: tasks[i]),
+                ),
               ),
             ),
     );
@@ -69,42 +74,49 @@ class TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bloc = context.watch<TasksBloc>();
     final assignee = bloc.userName(task.assigneeId);
-    return Card(
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(14),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => TaskDetailScreen(taskId: task.id)),
-        ),
-        title: Text(
-          task.title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              Chip(
-                avatar: const Icon(Icons.flag, size: 16),
-                label: Text(enumLabel(task.priority.name)),
-              ),
-              Chip(label: Text(enumLabel(task.status.name))),
-              Chip(
-                avatar: const Icon(Icons.person_outline, size: 16),
-                label: Text(assignee ?? 'Unassigned'),
-              ),
-              Chip(
-                avatar: const Icon(Icons.calendar_today, size: 14),
-                label: Text(
-                  '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
-                ),
-              ),
-            ],
+    return Semantics(
+      button: true,
+      label:
+          '${task.title}, ${enumLabel(task.priority.name)} priority, ${enumLabel(task.status.name)}, ${assignee ?? 'Unassigned'}',
+      child: Card(
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(14),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TaskDetailScreen(taskId: task.id),
+            ),
           ),
+          title: Text(
+            task.title,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                Chip(
+                  avatar: const Icon(Icons.flag, size: 16),
+                  label: Text(enumLabel(task.priority.name)),
+                ),
+                Chip(label: Text(enumLabel(task.status.name))),
+                Chip(
+                  avatar: const Icon(Icons.person_outline, size: 16),
+                  label: Text(assignee ?? 'Unassigned'),
+                ),
+                Chip(
+                  avatar: const Icon(Icons.calendar_today, size: 14),
+                  label: Text(
+                    '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          trailing: const Icon(Icons.chevron_right),
         ),
-        trailing: const Icon(Icons.chevron_right),
       ),
     );
   }
@@ -162,7 +174,7 @@ Future<void> showFilters(BuildContext context) async {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Filter tasks',
+                    context.l10n.text('filterTasks'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),

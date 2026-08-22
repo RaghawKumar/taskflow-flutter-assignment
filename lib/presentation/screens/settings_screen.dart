@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
+import '../../core/app_localizations.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/projects/projects_bloc.dart';
 import '../blocs/settings/settings_cubit.dart';
@@ -15,7 +16,7 @@ class SettingsScreen extends StatelessWidget {
     final settings = context.watch<SettingsCubit>();
     final session = auth.state.session!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile & Settings')),
+      appBar: AppBar(title: Text(context.l10n.text('profileSettings'))),
       body: ListView(
         padding: Responsive.listPadding(context, maxWidth: 720),
         children: [
@@ -51,9 +52,30 @@ class SettingsScreen extends StatelessWidget {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             secondary: const Icon(Icons.dark_mode_outlined),
-            title: const Text('Dark mode'),
+            title: Text(context.l10n.text('darkMode')),
             value: settings.state.darkMode,
             onChanged: settings.toggleTheme,
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.language),
+            title: Text(context.l10n.text('language')),
+            trailing: DropdownButton<String>(
+              value: settings.state.locale.languageCode,
+              onChanged: (value) {
+                if (value != null) settings.setLocale(Locale(value));
+              },
+              items: [
+                DropdownMenuItem(
+                  value: 'en',
+                  child: Text(context.l10n.text('english')),
+                ),
+                DropdownMenuItem(
+                  value: 'hi',
+                  child: Text(context.l10n.text('hindi')),
+                ),
+              ],
+            ),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -89,7 +111,7 @@ class SettingsScreen extends StatelessWidget {
               await auth.logout();
             },
             icon: const Icon(Icons.logout),
-            label: const Text('Log out'),
+            label: Text(context.l10n.text('logout')),
           ),
         ],
       ),

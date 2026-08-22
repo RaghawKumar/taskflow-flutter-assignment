@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/validators.dart';
+import '../../core/app_localizations.dart';
 import '../../domain/models/models.dart';
 import '../blocs/auth/auth_bloc.dart';
 
@@ -77,9 +78,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: email,
                       validator: Validators.email,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.text('email'),
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -89,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: Validators.password,
                       obscureText: hidden,
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: context.l10n.text('password'),
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           onPressed: () => setState(() => hidden = !hidden),
@@ -123,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               dimension: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Sign in'),
+                          : Text(context.l10n.text('login')),
                     ),
                     TextButton(
                       onPressed: () => Navigator.push(
@@ -166,7 +167,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Register')),
+    appBar: AppBar(title: Text(context.l10n.text('register'))),
     body: Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),

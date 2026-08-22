@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'core/app_localizations.dart';
 import 'data/datasources/mock_data_source.dart';
 import 'data/repositories/local_repositories.dart';
 import 'domain/models/models.dart';
@@ -63,6 +65,14 @@ class TaskFlowApp extends StatelessWidget {
             title: 'TaskFlow',
             debugShowCheckedModeBanner: false,
             themeMode: settings.darkMode ? ThemeMode.dark : ThemeMode.light,
+            locale: settings.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             theme: _theme(Brightness.light),
             darkTheme: _theme(Brightness.dark),
             home: auth.phase == LoadPhase.loading

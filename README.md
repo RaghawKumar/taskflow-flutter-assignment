@@ -47,6 +47,10 @@ The app uses the `flutter_bloc` package with bounded feature ownership: `AuthBlo
 - Offline and timeout simulation, cached/stale data banner, retry support
 - Responsive bottom navigation/navigation rail and dark mode
 - Compact, medium, and expanded breakpoints with centered maximum content widths, adaptive project grids, flexible dashboard metrics, scroll-safe forms, and landscape-safe filter sheets
+- Custom fade/slide navigation and staggered list-entry animations
+- Animated, screen-reader-aware skeleton loading states
+- English and Hindi localization with an in-app language selector
+- Accessibility semantics for metrics, tasks, loading announcements, destructive-action tooltips, and large-text-safe scrolling layouts
 
 ## Reviewer credentials
 

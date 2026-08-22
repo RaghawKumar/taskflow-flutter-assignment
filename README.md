@@ -20,16 +20,28 @@ lib/
     │   ├── auth/             session, login, registration and logout
     │   ├── projects/         project loading and mutations
     │   ├── tasks/            tasks, members, filters and assignment
-    │   └── settings/         theme and debug connectivity controls
-    ├── screens/              auth, dashboard, projects, tasks, settings
-    └── widgets/              injected controller scope
+    │   ├── notifications/    inbox loading and read-state mutations
+    │   └── settings/         theme, locale and debug connectivity controls
+    ├── screens/              auth, dashboard, projects, tasks, members,
+    │                         notifications and settings
+    └── widgets/              reusable skeleton/loading components
 ```
 
 `AssetMockDataSource` is the only class that reads `assets/mock-data.json`. Every top-level entity collection is parsed independently into typed organizations, users, organization members, projects, tasks, comments, notifications, credentials, and token data. UI code dispatches events to feature-specific BLoCs, which talk to repository interfaces; a future HTTP implementation can replace the local repositories without changing screens. Constructor injection wires dependencies in `main.dart`.
 
 All mock writes are also centralized in `MockDataSource` mutation methods (`upsertProject`, `removeProject`, `upsertTask`, `removeTask`, `setTaskAssignee`, and `removeMembership`). Repositories validate and authorize requests, then call these methods; they never mutate mock collections directly. Entities and request types support JSON serialization/deserialization, with generic `DataResponse`, `ListResponse`, and `MutationResponse` types mirroring transport-layer responses.
 
-The app uses the `flutter_bloc` package with bounded feature ownership: `AuthBloc`, `ProjectsBloc`, `TasksBloc`, and `SettingsCubit`. `MultiBlocProvider` injects them, an authentication listener coordinates organization-scoped initial loads, and screens watch only the feature state they need. `LoadPhase` models initial, loading, success, empty, and error consistently. Mutations and authorization checks live in BLoCs/repositories rather than widgets.
+The app uses the `flutter_bloc` package with bounded feature ownership: `AuthBloc`, `ProjectsBloc`, `TasksBloc`, `NotificationsBloc`, and `SettingsCubit`. `MultiBlocProvider` injects them, an authentication listener coordinates organization-scoped initial loads, and screens watch only the feature state they need. `LoadPhase` models initial, loading, success, empty, and error consistently. Mutations and authorization checks live in BLoCs/repositories rather than widgets.
+
+The dependency direction is:
+
+```text
+Screens/widgets -> BLoC/Cubit -> repository interface -> local repository
+                                                   -> asset data source
+                                                   -> secure/local storage
+```
+
+No widget reads JSON, secure storage, or SharedPreferences directly. This keeps the repository contracts suitable for a future HTTP-backed implementation.
 
 ## Implemented flows
 
@@ -62,16 +74,21 @@ Member: marcus.member@nimbusdigital.test / Password123!
 
 Additional Harborlight accounts remain in the bundled JSON. Credentials are loaded through the data layer and are not hardcoded into authentication logic or widgets. The visible admin hint is reviewer assistance only.
 
-## Simulating failures and offline mode
+## Mock data, simulated failures, and offline mode
+
+`assets/mock-data.json` is bundled as one Flutter asset. `AssetMockDataSource` loads it once, applies an artificial 300–800 ms delay, and deserializes each top-level key into its own typed collection. Local repositories scope results to the authenticated `org_id`, apply validation and authorization, expose request/response-style objects, and update the data source's process-local collections for mutations. The last successful project/task responses are persisted in SharedPreferences for stale offline reads.
 
 Open **Settings** after login:
 
-1. Enable **Simulate timeout**, then pull to refresh. Disable it and retry to recover.
-2. Enable **Simulate offline**. Last successfully loaded project/task data remains visible and an orange stale-data banner appears. Disable it to reconnect and refresh.
-3. Repository lookup of an unknown task ID produces `404 — task not found`.
-4. Empty names/titles produce simulated validation errors.
-5. A member account cannot delete a project even if repository deletion is invoked directly.
-6. Assigning an ID outside the active organization is rejected in the repository.
+1. **Timeout:** enable **Simulate timeout**, then pull down on Projects or Tasks. The error/retry UI appears. Disable the toggle and tap retry to recover.
+2. **Offline with cached data:** first load Projects and Tasks online, then enable **Simulate offline**. Existing data remains visible with an orange stale-data warning. Pull-to-refresh/retry is safe. Disable the toggle to reconnect and automatically refresh.
+3. **Offline without cached data:** clear the app's storage, launch and authenticate, then enable offline before the first project/task load. The screen shows an offline error and retry action instead of crashing.
+4. **Validation error:** submit a project with an empty name or a task with an empty title. Form validation appears immediately and the repository also rejects invalid requests.
+5. **Authentication error:** submit an incorrect email/password on Login to display the mocked authentication failure.
+6. **Authorization error:** sign in as the Member reviewer account. Project deletion and member mutation are unavailable in the UI, and direct repository calls are independently rejected. This enforcement is covered by the authorization unit tests.
+7. **404 error:** repository lookup/mutation with an unknown project or task ID produces a typed `404 — ... not found` failure. Because the normal UI only exposes valid IDs, reproduce this deterministic condition with the repository/error-state unit tests.
+8. **Cross-organization assignment:** attempting to assign a user outside the active organization is rejected by the repository. The picker filters invalid users, while the repository-level guard is demonstrated by its unit test.
+9. **Cancellation:** start repeated pull-to-refresh actions quickly. A newer project/task read cooperatively cancels the superseded read without presenting cancellation as an application error.
 
 Artificial request latency is randomized between 300–800 ms so loading UI is observable.
 
@@ -79,18 +96,26 @@ Overlapping reads on the same repository channel use cooperative `CancellationTo
 
 ## Setup and commands
 
-Developed with Flutter's stable channel and Dart 3. Run from the project root:
+Verified development toolchain:
+
+```text
+Flutter 3.41.9 (stable)
+Dart 3.11.5
+DevTools 2.54.2
+```
+
+Install Flutter stable and Android Studio/Android SDK, confirm `flutter doctor` is healthy, and start an Android emulator or connect a device. Then run from the project root:
 
 ```bash
 flutter pub get
 flutter run
 flutter test
-flutter test integration_test
+flutter test integration_test/app_test.dart
 flutter test --coverage
 flutter build apk --release
 ```
 
-The release APK is written to `build/app/outputs/flutter-apk/app-release.apk`.
+`flutter test` runs the isolated unit, widget, and golden suites. The integration command requires a connected Android target and builds/installs a test application. APK generation is not required during ordinary development; when explicitly requested, the release build is written to `build/app/outputs/flutter-apk/app-release.apk`.
 
 ## Tests
 
@@ -98,8 +123,12 @@ Unit coverage includes validation, multi-dimensional task filtering, feature-BLo
 
 ## Technical decisions and limitations
 
-- Project/task mutations are intentionally in-memory for the process lifetime, as permitted by the brief; successful reads are cached for offline display.
+- Android is the required and verified target. iOS is optional in the brief and has not been treated as a release target.
+- Project/task/member mutations are intentionally process-local, as permitted by the brief. SharedPreferences stores the last successful project/task snapshots for offline display, not a durable transactional database.
 - Registration simulates success and does not create a persistent credential.
-- Mock refresh retains the fixture refresh token but issues a distinct JWT-style simulated access token and renews its 15-minute expiry. Tokens are never logged or exposed to widgets.
-- Notification inbox, biometrics, inactivity timeout, and pending-operation sync are bonus scope and are not included.
+- Mock refresh retains the fixture refresh token but issues a distinct JWT-style simulated access token and renews its 15-minute expiry. This demonstrates client session behavior; it does not cryptographically sign or remotely validate a real JWT. Tokens are never logged or exposed to widgets.
+- Offline mode supports cached reads and retry, but offline mutations and the optional pending-operation synchronization queue are not implemented.
+- The notification inbox reads assignment-event fixtures and deep-links to related tasks; creating a new assignment does not synthesize a new notification event.
+- Dark mode, responsive/tablet layouts, animations, skeleton loading, accessibility semantics, English/Hindi localization, notifications, cancellation, golden testing, and coverage output are included bonus work. Localization covers application-authored UI; fixture content remains in its source language.
+- Biometrics and inactivity timeout are outside the assignment scope and are not implemented.
 - Avatar URLs are not fetched, preserving the no-third-party-network requirement.

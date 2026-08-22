@@ -112,13 +112,48 @@ class TaskFlowApp extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        indicatorColor: scheme.secondaryContainer,
+        indicatorColor: scheme.primary,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? scheme.onPrimary
+                : scheme.onSurfaceVariant,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            color: states.contains(WidgetState.selected)
+                ? scheme.primary
+                : scheme.onSurfaceVariant,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w500,
+          ),
+        ),
       ),
       navigationRailTheme: NavigationRailThemeData(
-        indicatorColor: scheme.secondaryContainer,
+        indicatorColor: scheme.primary,
+        selectedIconTheme: IconThemeData(color: scheme.onPrimary),
+        selectedLabelTextStyle: TextStyle(
+          color: scheme.primary,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+        unselectedLabelTextStyle: TextStyle(color: scheme.onSurfaceVariant),
       ),
-      inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: scheme.surface.withValues(alpha: 0.86),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: scheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: scheme.primary, width: 2),
+        ),
+        prefixIconColor: scheme.primary,
       ),
       cardTheme: CardThemeData(
         color: scheme.surface,
@@ -128,6 +163,61 @@ class TaskFlowApp extends StatelessWidget {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: scheme.primary,
         foregroundColor: scheme.onPrimary,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: scheme.primary,
+          foregroundColor: scheme.onPrimary,
+          minimumSize: const Size(48, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: scheme.primary,
+          side: BorderSide(color: scheme.primary),
+          minimumSize: const Size(48, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: scheme.primary),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(foregroundColor: scheme.primary),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: scheme.surface,
+        selectedColor: scheme.primaryContainer,
+        checkmarkColor: scheme.primary,
+        side: BorderSide(color: scheme.outlineVariant),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? scheme.onPrimary
+              : scheme.outline,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? scheme.primary
+              : scheme.surfaceContainerHighest,
+        ),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: scheme.primary,
+        linearTrackColor: scheme.primaryContainer,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.navy,
+        contentTextStyle: const TextStyle(color: Colors.white),
+        actionTextColor: scheme.primary,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

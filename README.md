@@ -86,6 +86,7 @@ flutter pub get
 flutter run
 flutter test
 flutter test integration_test
+flutter test --coverage
 flutter build apk --release
 ```
 
@@ -93,7 +94,7 @@ The release APK is written to `build/app/outputs/flutter-apk/app-release.apk`.
 
 ## Tests
 
-Unit coverage includes validation, multi-dimensional task filtering, feature-BLoC authentication, project loading/error recovery, task filtering, and mock-data parsing. Widget coverage includes login form validation and responsive breakpoints. The `integration_test` device-suite entry point is isolated from the unit suite and ready for device-driven flows. Tests use fakes and never require a network.
+Unit coverage includes validation, multi-dimensional task filtering, feature-BLoC authentication, project loading/error recovery, task filtering, notifications, cancellation, authorization, serialization, and mock-data parsing. Widget coverage includes login validation, task-list loading/empty/error/success, task-status updates, responsive breakpoints, accessibility, localization, destructive dialogs, and a login-screen golden. Integration tests independently cover mock login, organization project listing, task listing, task create/update, and assignment. Tests use fresh mock-backed dependencies and never require a network. `flutter test --coverage` writes the LCOV report to `coverage/lcov.info`; regenerate goldens intentionally with `flutter test --update-goldens test/widget/golden_login_test.dart`.
 
 ## Technical decisions and limitations
 

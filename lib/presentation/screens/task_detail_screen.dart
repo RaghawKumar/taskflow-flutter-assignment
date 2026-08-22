@@ -43,6 +43,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         title: const Text('Task details'),
         actions: [
           IconButton(
+            tooltip: 'Edit task',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -110,6 +111,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String?>(
+            key: const Key('assignee_dropdown'),
             initialValue: task.assigneeId,
             decoration: const InputDecoration(labelText: 'Assignee'),
             items: [
@@ -235,6 +237,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
               child: Column(
                 children: [
                   TextFormField(
+                    key: const Key('task_title'),
                     controller: title,
                     validator: (v) => v == null || v.trim().isEmpty
                         ? 'Task title is required.'
@@ -243,6 +246,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
+                    key: const Key('task_description'),
                     controller: description,
                     maxLines: 4,
                     decoration: const InputDecoration(labelText: 'Description'),
@@ -277,6 +281,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String?>(
+                    key: const Key('task_assignee'),
                     initialValue: assignee,
                     decoration: const InputDecoration(labelText: 'Assignee'),
                     items: [

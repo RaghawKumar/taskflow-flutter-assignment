@@ -4,6 +4,8 @@ TaskFlow is an Android-first Flutter project-management app built entirely from 
 
 ## Architecture
 
+Reviewer documentation: [Architecture Document](docs/ARCHITECTURE.md) · [PDF version](docs/TaskFlow_Architecture_Document.pdf)
+
 The app uses a small clean/layered architecture:
 
 ```text

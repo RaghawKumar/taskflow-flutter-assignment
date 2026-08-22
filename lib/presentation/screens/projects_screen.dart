@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/app_colors.dart';
 import '../../core/responsive.dart';
 import '../../core/app_localizations.dart';
 import '../../domain/models/models.dart';
@@ -43,67 +44,40 @@ class ProjectsScreen extends StatelessWidget {
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
                 crossAxisSpacing: 16,
-                mainAxisSpacing: 12,
-                mainAxisExtent: Responsive.isCompact(context) ? 150 : 175,
+                mainAxisSpacing: 16,
+                mainAxisExtent: Responsive.isCompact(context) ? 174 : 184,
               ),
               itemCount: state.projects.length,
               itemBuilder: (context, index) {
                 final p = state.projects[index];
                 return FadeSlideIn(
                   delay: Duration(milliseconds: index * 45),
-                  child: Card(
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      leading: const CircleAvatar(
-                        child: Icon(Icons.folder_outlined),
-                      ),
-                      title: Text(
-                        p.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                          '${p.description}\n${tasksBloc.countForProject(p.id)} tasks',
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      isThreeLine: true,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ProjectDetailsScreen(project: p),
-                        ),
-                      ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) async {
-                          if (value == 'edit')
-                            showProjectForm(context, project: p);
-                          if (value == 'delete' &&
-                              await confirmDelete(context, p.name) &&
-                              context.mounted) {
-                            final ok = await projectsBloc.delete(
-                              p.id,
-                              actorUserId: session.user.id,
-                            );
-                            if (!ok && context.mounted)
-                              showError(context, projectsBloc.state.error!);
-                          }
-                        },
-                        itemBuilder: (_) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Text('Edit'),
-                          ),
-                          if (session.isAdmin)
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Delete'),
-                            ),
-                        ],
+                  child: _ProjectCard(
+                    project: p,
+                    taskCount: tasksBloc.countForProject(p.id),
+                    canDelete: session.isAdmin,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProjectDetailsScreen(project: p),
                       ),
                     ),
+                    onAction: (value) async {
+                      if (value == 'edit') {
+                        showProjectForm(context, project: p);
+                      }
+                      if (value == 'delete' &&
+                          await confirmDelete(context, p.name) &&
+                          context.mounted) {
+                        final ok = await projectsBloc.delete(
+                          p.id,
+                          actorUserId: session.user.id,
+                        );
+                        if (!ok && context.mounted) {
+                          showError(context, projectsBloc.state.error!);
+                        }
+                      }
+                    },
                   ),
                 );
               },
@@ -113,12 +87,167 @@ class ProjectsScreen extends StatelessWidget {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.text('projects'))),
+      appBar: AppBar(
+        title: Text(
+          context.l10n.text('projects'),
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => showProjectForm(context),
         child: const Icon(Icons.add),
       ),
       body: body,
+    );
+  }
+}
+
+class _ProjectCard extends StatelessWidget {
+  const _ProjectCard({
+    required this.project,
+    required this.taskCount,
+    required this.canDelete,
+    required this.onTap,
+    required this.onAction,
+  });
+
+  final Project project;
+  final int taskCount;
+  final bool canDelete;
+  final VoidCallback onTap;
+  final ValueChanged<String> onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.colorScheme.primary;
+
+    return Card(
+      elevation: isDark ? 0 : 2,
+      shadowColor: AppColors.primary.withValues(alpha: 0.12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: primary.withValues(alpha: 0.16)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ColoredBox(color: primary, child: const SizedBox(width: 5)),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                          child: Icon(Icons.folder_rounded, color: primary),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              project.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                        PopupMenuButton<String>(
+                          tooltip: 'Project actions',
+                          onSelected: onAction,
+                          itemBuilder: (_) => [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Edit'),
+                            ),
+                            if (canDelete)
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Delete'),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: Text(
+                        project.description.trim().isEmpty
+                            ? 'No description added.'
+                            : project.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.task_alt_rounded,
+                                size: 16,
+                                color: primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '$taskCount ${taskCount == 1 ? 'task' : 'tasks'}',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'View project',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Icon(Icons.chevron_right_rounded, color: primary),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -135,9 +264,15 @@ class ProjectDetailsScreen extends StatelessWidget {
         .toList();
     return Scaffold(
       appBar: AppBar(
-        title: Text(project.name),
+        title: Text(
+          project.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
         actions: [
           IconButton(
+            tooltip: 'Edit project',
             icon: const Icon(Icons.edit),
             onPressed: () => showProjectForm(context, project: project),
           ),
@@ -158,46 +293,324 @@ class ProjectDetailsScreen extends StatelessWidget {
         child: ListView(
           padding: Responsive.listPadding(context),
           children: [
-            Text(project.description),
-            const SizedBox(height: 20),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: TaskStatus.values
-                  .map(
-                    (s) => Chip(
-                      label: Text(
-                        '${enumLabel(s.name)}: ${tasks.where((t) => t.status == s).length}',
-                      ),
-                    ),
-                  )
-                  .toList(),
+            _ProjectOverview(project: project, taskCount: tasks.length),
+            const SizedBox(height: 24),
+            Text(
+              'Task summary',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 20),
-            Text('Tasks', style: Theme.of(context).textTheme.titleLarge),
-            if (tasks.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: Text('No tasks in this project')),
-              ),
-            ...tasks.map(
-              (t) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(t.title),
-                subtitle: Text(
-                  '${enumLabel(t.status.name)} • ${enumLabel(t.priority.name)}',
+            const SizedBox(height: 12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 720 ? 4 : 2;
+                final width =
+                    (constraints.maxWidth - (12 * (columns - 1))) / columns;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: TaskStatus.values
+                      .map(
+                        (status) => SizedBox(
+                          width: width,
+                          child: _StatusSummaryCard(
+                            status: status,
+                            count: tasks
+                                .where((task) => task.status == status)
+                                .length,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                );
+              },
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Text(
+                  'Project tasks',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.push(
+                const Spacer(),
+                Text(
+                  '${tasks.length} total',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (tasks.isEmpty)
+              _EmptyProjectTasks(
+                onCreate: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => TaskDetailScreen(taskId: t.id),
+                    builder: (_) => TaskFormScreen(projectId: project.id),
+                  ),
+                ),
+              ),
+            ...tasks.indexed.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: FadeSlideIn(
+                  delay: Duration(milliseconds: entry.$1 * 45),
+                  child: _ProjectTaskCard(
+                    task: entry.$2,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TaskDetailScreen(taskId: entry.$2.id),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ProjectOverview extends StatelessWidget {
+  const _ProjectOverview({required this.project, required this.taskCount});
+
+  final Project project;
+  final int taskCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: primary.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: primary,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              Icons.folder_rounded,
+              color: theme.colorScheme.onPrimary,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  project.name,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  project.description.trim().isEmpty
+                      ? 'No project description added.'
+                      : project.description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '$taskCount ${taskCount == 1 ? 'task' : 'tasks'} in this project',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusSummaryCard extends StatelessWidget {
+  const _StatusSummaryCard({required this.status, required this.count});
+
+  final TaskStatus status;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: primary.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$count',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            enumLabel(status.name),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProjectTaskCard extends StatelessWidget {
+  const _ProjectTaskCard({required this.task, required this.onTap});
+
+  final TaskItem task;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: theme.brightness == Brightness.dark ? 0 : 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: primary.withValues(alpha: 0.14)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 4,
+              child: ColoredBox(color: primary),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.task_alt_rounded, color: primary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          task.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${enumLabel(task.status.name)}  •  ${enumLabel(task.priority.name)} priority',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.chevron_right_rounded, color: primary),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyProjectTasks extends StatelessWidget {
+  const _EmptyProjectTasks({required this.onCreate});
+
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: primary.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.playlist_add_rounded, size: 44, color: primary),
+          const SizedBox(height: 10),
+          Text(
+            'No tasks in this project',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Create the first task to start tracking progress.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: onCreate,
+            icon: const Icon(Icons.add),
+            label: const Text('Create task'),
+          ),
+        ],
       ),
     );
   }

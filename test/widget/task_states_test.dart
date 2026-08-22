@@ -9,6 +9,7 @@ import 'package:taskflow/domain/repositories/repositories.dart';
 import 'package:taskflow/presentation/blocs/auth/auth_bloc.dart';
 import 'package:taskflow/presentation/blocs/projects/projects_bloc.dart';
 import 'package:taskflow/presentation/blocs/tasks/tasks_bloc.dart';
+import 'package:taskflow/presentation/screens/projects_screen.dart';
 import 'package:taskflow/presentation/screens/task_detail_screen.dart';
 import 'package:taskflow/presentation/screens/tasks_screen.dart';
 import 'package:taskflow/presentation/widgets/skeleton_loading.dart';
@@ -40,6 +41,27 @@ void main() {
     await _pump(tester, _TaskRepository(), const TasksScreen());
     expect(find.text('Test task'), findsOneWidget);
     expect(find.byKey(const Key('task_list')), findsOneWidget);
+  });
+
+  testWidgets('project details renders task cards without layout errors', (
+    tester,
+  ) async {
+    final project = Project(
+      id: 'project_1',
+      orgId: 'org_1',
+      name: 'Project',
+      description: 'Project description',
+      createdAt: DateTime(2026),
+    );
+    await _pump(
+      tester,
+      _TaskRepository(),
+      ProjectDetailsScreen(project: project),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Test task'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('task status update changes repository and UI state', (

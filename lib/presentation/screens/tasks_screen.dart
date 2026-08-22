@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/responsive.dart';
 import '../../domain/models/models.dart';
 import '../widgets/app_scope.dart';
 import 'task_detail_screen.dart';
@@ -46,7 +47,7 @@ class TasksScreen extends StatelessWidget {
               onRefresh: app.loadAll,
               child: ListView.builder(
                 key: const Key('task_list'),
-                padding: const EdgeInsets.all(16),
+                padding: Responsive.listPadding(context, maxWidth: 920),
                 itemCount: tasks.length,
                 itemBuilder: (context, i) => TaskCard(task: tasks[i]),
               ),
@@ -140,130 +141,141 @@ Future<void> showFilters(BuildContext context) async {
     context: context,
     isScrollControlled: true,
     builder: (sheetContext) => StatefulBuilder(
-      builder: (context, setState) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          20,
-          20,
-          20,
-          MediaQuery.viewInsetsOf(context).bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Filter tasks', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<TaskStatus?>(
-              initialValue: status,
-              decoration: const InputDecoration(labelText: 'Status'),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('Any')),
-                ...TaskStatus.values.map(
-                  (v) => DropdownMenuItem(
-                    value: v,
-                    child: Text(enumLabel(v.name)),
+      builder: (context, setState) => SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            MediaQuery.viewInsetsOf(context).bottom + 20,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Filter tasks',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                ),
-              ],
-              onChanged: (v) => setState(() => status = v),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<TaskPriority?>(
-              initialValue: priority,
-              decoration: const InputDecoration(labelText: 'Priority'),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('Any')),
-                ...TaskPriority.values.map(
-                  (v) => DropdownMenuItem(
-                    value: v,
-                    child: Text(enumLabel(v.name)),
-                  ),
-                ),
-              ],
-              onChanged: (v) => setState(() => priority = v),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String?>(
-              initialValue: assignee,
-              decoration: const InputDecoration(labelText: 'Assignee'),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('Any')),
-                ...app.members.map(
-                  (u) => DropdownMenuItem(value: u.id, child: Text(u.name)),
-                ),
-              ],
-              onChanged: (v) => setState(() => assignee = v),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () async {
-                      final d = await showDatePicker(
-                        context: context,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2035),
-                        initialDate: from ?? DateTime.now(),
-                      );
-                      if (d != null) setState(() => from = d);
-                    },
-                    child: Text(
-                      from == null
-                          ? 'Due from'
-                          : '${from!.day}/${from!.month}/${from!.year}',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () async {
-                      final d = await showDatePicker(
-                        context: context,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2035),
-                        initialDate: to ?? DateTime.now(),
-                      );
-                      if (d != null) setState(() => to = d);
-                    },
-                    child: Text(
-                      to == null
-                          ? 'Due to'
-                          : '${to!.day}/${to!.month}/${to!.year}',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                TextButton(
-                  onPressed: () {
-                    app.setFilter(const TaskFilter());
-                    Navigator.pop(sheetContext);
-                  },
-                  child: const Text('Clear'),
-                ),
-                const Spacer(),
-                FilledButton(
-                  onPressed: () {
-                    app.setFilter(
-                      TaskFilter(
-                        status: status,
-                        priority: priority,
-                        assigneeId: assignee,
-                        from: from,
-                        to: to,
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<TaskStatus?>(
+                    initialValue: status,
+                    decoration: const InputDecoration(labelText: 'Status'),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Any')),
+                      ...TaskStatus.values.map(
+                        (v) => DropdownMenuItem(
+                          value: v,
+                          child: Text(enumLabel(v.name)),
+                        ),
                       ),
-                    );
-                    Navigator.pop(sheetContext);
-                  },
-                  child: const Text('Apply'),
-                ),
-              ],
+                    ],
+                    onChanged: (v) => setState(() => status = v),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<TaskPriority?>(
+                    initialValue: priority,
+                    decoration: const InputDecoration(labelText: 'Priority'),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Any')),
+                      ...TaskPriority.values.map(
+                        (v) => DropdownMenuItem(
+                          value: v,
+                          child: Text(enumLabel(v.name)),
+                        ),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => priority = v),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String?>(
+                    initialValue: assignee,
+                    decoration: const InputDecoration(labelText: 'Assignee'),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Any')),
+                      ...app.members.map(
+                        (u) =>
+                            DropdownMenuItem(value: u.id, child: Text(u.name)),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => assignee = v),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            final d = await showDatePicker(
+                              context: context,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2035),
+                              initialDate: from ?? DateTime.now(),
+                            );
+                            if (d != null) setState(() => from = d);
+                          },
+                          child: Text(
+                            from == null
+                                ? 'Due from'
+                                : '${from!.day}/${from!.month}/${from!.year}',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            final d = await showDatePicker(
+                              context: context,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2035),
+                              initialDate: to ?? DateTime.now(),
+                            );
+                            if (d != null) setState(() => to = d);
+                          },
+                          child: Text(
+                            to == null
+                                ? 'Due to'
+                                : '${to!.day}/${to!.month}/${to!.year}',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          app.setFilter(const TaskFilter());
+                          Navigator.pop(sheetContext);
+                        },
+                        child: const Text('Clear'),
+                      ),
+                      const Spacer(),
+                      FilledButton(
+                        onPressed: () {
+                          app.setFilter(
+                            TaskFilter(
+                              status: status,
+                              priority: priority,
+                              assigneeId: assignee,
+                              from: from,
+                              to: to,
+                            ),
+                          );
+                          Navigator.pop(sheetContext);
+                        },
+                        child: const Text('Apply'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     ),

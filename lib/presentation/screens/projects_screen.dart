@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/responsive.dart';
 import '../../domain/models/models.dart';
 import '../widgets/app_scope.dart';
 import 'task_detail_screen.dart';
@@ -24,56 +25,74 @@ class ProjectsScreen extends StatelessWidget {
         onRetry: () => showProjectForm(context),
       );
     } else {
-      body = RefreshIndicator(
-        onRefresh: app.loadAll,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: app.projects.length,
-          itemBuilder: (context, index) {
-            final p = app.projects[index];
-            return Card(
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
-                leading: const CircleAvatar(child: Icon(Icons.folder_outlined)),
-                title: Text(
-                  p.name,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text('${p.description}\n${app.taskCount(p.id)} tasks'),
-                ),
-                isThreeLine: true,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProjectDetailsScreen(project: p),
-                  ),
-                ),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (value) async {
-                    if (value == 'edit') showProjectForm(context, project: p);
-                    if (value == 'delete' &&
-                        await confirmDelete(context, p.name) &&
-                        context.mounted) {
-                      final ok = await app.deleteProject(p.id);
-                      if (!ok && context.mounted)
-                        showError(context, app.error!);
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                    if (app.session!.isAdmin)
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Text('Delete'),
-                      ),
-                  ],
-                ),
+      body = LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = Responsive.columns(context);
+          return RefreshIndicator(
+            onRefresh: app.loadAll,
+            child: GridView.builder(
+              padding: Responsive.listPadding(context, maxWidth: 1280),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 12,
+                mainAxisExtent: Responsive.isCompact(context) ? 150 : 175,
               ),
-            );
-          },
-        ),
+              itemCount: app.projects.length,
+              itemBuilder: (context, index) {
+                final p = app.projects[index];
+                return Card(
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: const CircleAvatar(
+                      child: Icon(Icons.folder_outlined),
+                    ),
+                    title: Text(
+                      p.name,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        '${p.description}\n${app.taskCount(p.id)} tasks',
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    isThreeLine: true,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProjectDetailsScreen(project: p),
+                      ),
+                    ),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) async {
+                        if (value == 'edit')
+                          showProjectForm(context, project: p);
+                        if (value == 'delete' &&
+                            await confirmDelete(context, p.name) &&
+                            context.mounted) {
+                          final ok = await app.deleteProject(p.id);
+                          if (!ok && context.mounted)
+                            showError(context, app.error!);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                        if (app.session!.isAdmin)
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Delete'),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       );
     }
     return Scaffold(
@@ -117,7 +136,7 @@ class ProjectDetailsScreen extends StatelessWidget {
       body: RefreshIndicator(
         onRefresh: app.loadAll,
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: Responsive.listPadding(context),
           children: [
             Text(project.description),
             const SizedBox(height: 20),

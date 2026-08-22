@@ -39,6 +39,7 @@ The app uses the `flutter_bloc` package. `AppBloc` receives explicit authenticat
 - SharedPreferences cache of the last successful project/task response
 - Offline and timeout simulation, cached/stale data banner, retry support
 - Responsive bottom navigation/navigation rail and dark mode
+- Compact, medium, and expanded breakpoints with centered maximum content widths, adaptive project grids, flexible dashboard metrics, scroll-safe forms, and landscape-safe filter sheets
 
 ## Reviewer credentials
 

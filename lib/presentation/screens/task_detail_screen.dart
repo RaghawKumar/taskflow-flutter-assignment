@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/responsive.dart';
 import '../../domain/models/models.dart';
 import '../widgets/app_scope.dart';
 import 'projects_screen.dart';
@@ -39,7 +40,7 @@ class TaskDetailScreen extends StatelessWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: Responsive.listPadding(context, maxWidth: 760),
         children: [
           Text(task.title, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
@@ -165,7 +166,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
         title: Text(widget.task == null ? 'Create task' : 'Edit task'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: Responsive.listPadding(context, maxWidth: 760),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),

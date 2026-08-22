@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/responsive.dart';
 import '../widgets/app_scope.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -9,7 +10,7 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Profile & Settings')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: Responsive.listPadding(context, maxWidth: 720),
         children: [
           CircleAvatar(
             radius: 36,

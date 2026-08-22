@@ -5,37 +5,6 @@ import '../../core/app_localizations.dart';
 import '../../domain/models/models.dart';
 import '../blocs/auth/auth_bloc.dart';
 
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(
-            'assets/branding/taskflow_app_icon.png',
-            width: 180,
-            height: 180,
-            fit: BoxFit.contain,
-            semanticLabel: 'TaskFlow TF logo',
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'TaskFlow',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 24),
-          const CircularProgressIndicator(),
-        ],
-      ),
-    ),
-  );
-}
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override

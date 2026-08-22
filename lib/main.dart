@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -17,16 +19,18 @@ import 'presentation/screens/auth_screens.dart';
 import 'presentation/screens/home_screen.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  binding.deferFirstFrame();
   final source = AssetMockDataSource();
   final taskRepository = LocalTaskFlowRepository(source);
   final biometricService = LocalBiometricService();
+  final authBloc = AuthBloc(
+    LocalAuthRepository(source),
+    biometricService: biometricService,
+  );
   runApp(
     TaskFlowApp(
-      authBloc: AuthBloc(
-        LocalAuthRepository(source),
-        biometricService: biometricService,
-      ),
+      authBloc: authBloc,
       projectsBloc: ProjectsBloc(taskRepository),
       tasksBloc: TasksBloc(taskRepository),
       settingsCubit: SettingsCubit(
@@ -35,6 +39,15 @@ void main() {
       )..loadSecuritySettings(),
       notificationsBloc: NotificationsBloc(taskRepository),
     ),
+  );
+  unawaited(
+    authBloc.stream
+        .firstWhere(
+          (state) =>
+              state.phase != LoadPhase.initial &&
+              state.phase != LoadPhase.loading,
+        )
+        .whenComplete(binding.allowFirstFrame),
   );
 }
 
@@ -92,9 +105,7 @@ class TaskFlowApp extends StatelessWidget {
             ],
             theme: _theme(Brightness.light),
             darkTheme: _theme(Brightness.dark),
-            home: auth.phase == LoadPhase.loading
-                ? const SplashScreen()
-                : auth.session == null
+            home: auth.session == null
                 ? const LoginScreen()
                 : SessionActivityMonitor(
                     onTimeout: authBloc.logout,

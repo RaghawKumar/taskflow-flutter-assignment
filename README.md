@@ -85,11 +85,16 @@ Registration validates locally and simulates success without adding a credential
 ## Reviewer credentials
 
 ```text
+Org A — Nimbus Digital
 Admin:  ava.admin@nimbusdigital.test / Password123!
 Member: marcus.member@nimbusdigital.test / Password123!
+
+Org B — Harborlight Studios
+Admin:  daniel.admin@harborlightstudios.test / Password123!
+Member: elena.member@harborlightstudios.test / Password123!
 ```
 
-Additional Harborlight accounts remain in the bundled JSON. Credentials are loaded through the data layer and are not hardcoded into authentication logic or widgets. The visible admin hint is reviewer assistance only.
+All credentials are loaded through the data layer from `auth_mock.test_credentials`; they are not hardcoded into authentication logic or widgets. The visible admin hint is reviewer assistance only.
 
 ## Mock data, simulated failures, and offline mode
 

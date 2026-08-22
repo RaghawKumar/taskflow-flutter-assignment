@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/app_localizations.dart';
 import 'core/app_colors.dart';
+import 'core/session_activity_monitor.dart';
 import 'data/datasources/mock_data_source.dart';
 import 'data/repositories/local_repositories.dart';
+import 'data/services/local_biometric_service.dart';
 import 'domain/models/models.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/notifications/notifications_bloc.dart';
@@ -18,12 +20,19 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final source = AssetMockDataSource();
   final taskRepository = LocalTaskFlowRepository(source);
+  final biometricService = LocalBiometricService();
   runApp(
     TaskFlowApp(
-      authBloc: AuthBloc(LocalAuthRepository(source)),
+      authBloc: AuthBloc(
+        LocalAuthRepository(source),
+        biometricService: biometricService,
+      ),
       projectsBloc: ProjectsBloc(taskRepository),
       tasksBloc: TasksBloc(taskRepository),
-      settingsCubit: SettingsCubit(taskRepository),
+      settingsCubit: SettingsCubit(
+        taskRepository,
+        biometricService: biometricService,
+      )..loadSecuritySettings(),
       notificationsBloc: NotificationsBloc(taskRepository),
     ),
   );
@@ -87,7 +96,10 @@ class TaskFlowApp extends StatelessWidget {
                 ? const SplashScreen()
                 : auth.session == null
                 ? const LoginScreen()
-                : const HomeScreen(),
+                : SessionActivityMonitor(
+                    onTimeout: authBloc.logout,
+                    child: const HomeScreen(),
+                  ),
           ),
         ),
       ),

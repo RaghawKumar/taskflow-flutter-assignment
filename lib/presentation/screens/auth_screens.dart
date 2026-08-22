@@ -145,6 +145,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     )
                   : Text(context.l10n.text('login')),
             ),
+            if (auth.state.biometricRequired) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                key: const Key('biometric_unlock_button'),
+                onPressed: auth.state.phase == LoadPhase.loading
+                    ? null
+                    : auth.unlockWithBiometrics,
+                icon: const Icon(Icons.fingerprint_rounded),
+                label: const Text('Unlock with biometrics'),
+              ),
+            ],
+            if (auth.state.biometricError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(
+                  auth.state.biometricError!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
             TextButton(
               onPressed: () => Navigator.push(
                 context,

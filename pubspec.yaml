@@ -39,6 +39,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.5.3
   flutter_bloc: ^9.1.1
+  local_auth: ^3.0.2
 
 dev_dependencies:
   flutter_test:

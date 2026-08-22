@@ -104,6 +104,50 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const _SettingsSectionTitle(
+            icon: Icons.security_rounded,
+            title: 'Security',
+          ),
+          const SizedBox(height: 10),
+          _SettingsCard(
+            child: Column(
+              children: [
+                _SettingsSwitchTile(
+                  icon: Icons.fingerprint_rounded,
+                  title: 'Biometric unlock',
+                  subtitle: settings.state.biometricAvailable == false
+                      ? 'No enrolled biometrics detected on this device'
+                      : settings.state.biometricEnabled
+                      ? 'Required when restoring your saved session'
+                      : 'Use fingerprint or face authentication to unlock',
+                  value: settings.state.biometricEnabled,
+                  onChanged: (value) async {
+                    final message = await settings.setBiometricEnabled(value);
+                    if (!context.mounted) return;
+                    if (message != null) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(message)));
+                    } else if (value) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Biometric unlock enabled.'),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const _SettingsDivider(),
+                const _SettingsTile(
+                  icon: Icons.lock_clock_rounded,
+                  title: 'Automatic session timeout',
+                  subtitle: 'Signs you out after 5 minutes of inactivity',
+                  trailing: _SecurityStatusBadge(text: 'Active'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const _SettingsSectionTitle(
             icon: Icons.science_outlined,
             title: 'Testing & connectivity',
           ),
@@ -395,4 +439,26 @@ class _SettingsDivider extends StatelessWidget {
     indent: 72,
     color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
   );
+}
+
+class _SecurityStatusBadge extends StatelessWidget {
+  const _SecurityStatusBadge({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: primary, fontWeight: FontWeight.w800),
+      ),
+    );
+  }
 }

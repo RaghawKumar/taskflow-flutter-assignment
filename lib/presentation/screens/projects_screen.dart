@@ -242,6 +242,11 @@ class ProjectDetailsScreen extends StatelessWidget {
   final Project project;
   @override
   Widget build(BuildContext context) {
+    final projectsState = context.watch<ProjectsBloc>().state;
+    final currentProject = projectsState.projects
+        .where((item) => item.id == project.id)
+        .firstOrNull;
+    final displayedProject = currentProject ?? project;
     final tasksBloc = context.watch<TasksBloc>();
     final session = context.watch<AuthBloc>().state.session!;
     final tasks = tasksBloc.state.tasks
@@ -250,7 +255,7 @@ class ProjectDetailsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          project.name,
+          displayedProject.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontWeight: FontWeight.w800),
@@ -259,7 +264,8 @@ class ProjectDetailsScreen extends StatelessWidget {
           IconButton(
             tooltip: 'Edit project',
             icon: const Icon(Icons.edit),
-            onPressed: () => showProjectForm(context, project: project),
+            onPressed: () =>
+                showProjectForm(context, project: displayedProject),
           ),
         ],
       ),
@@ -278,7 +284,10 @@ class ProjectDetailsScreen extends StatelessWidget {
         child: ListView(
           padding: Responsive.listPadding(context),
           children: [
-            _ProjectOverview(project: project, taskCount: tasks.length),
+            _ProjectOverview(
+              project: displayedProject,
+              taskCount: tasks.length,
+            ),
             const SizedBox(height: 24),
             Text(
               'Task summary',

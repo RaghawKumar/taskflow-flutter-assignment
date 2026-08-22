@@ -64,6 +64,29 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('project details refreshes immediately after project edit', (
+    tester,
+  ) async {
+    final repository = _TaskRepository();
+    await _pump(
+      tester,
+      repository,
+      ProjectDetailsScreen(project: repository.project),
+    );
+
+    await tester.tap(find.byTooltip('Edit project'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('project_name')),
+      'Updated Project',
+    );
+    await tester.tap(find.byKey(const Key('save_project')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Updated Project'), findsNWidgets(2));
+    expect(find.text('Project'), findsNothing);
+  });
+
   testWidgets('task status update changes repository and UI state', (
     tester,
   ) async {
@@ -151,6 +174,13 @@ class _TaskRepository implements TaskFlowRepository {
             ),
           ];
   List<TaskItem> tasks;
+  Project project = Project(
+    id: 'project_1',
+    orgId: 'org_1',
+    name: 'Project',
+    description: '',
+    createdAt: DateTime(2026),
+  );
   Object? error;
   Completer<void>? loadingGate;
   @override
@@ -169,15 +199,7 @@ class _TaskRepository implements TaskFlowRepository {
   }
 
   @override
-  Future<List<Project>> projectsForOrg(String orgId) async => [
-    Project(
-      id: 'project_1',
-      orgId: orgId,
-      name: 'Project',
-      description: '',
-      createdAt: DateTime(2026),
-    ),
-  ];
+  Future<List<Project>> projectsForOrg(String orgId) async => [project];
   @override
   Future<List<AppUser>> membersForOrg(String orgId) async => const [
     AppUser(id: 'user_1', name: 'User', email: 'user@example.com'),
@@ -222,7 +244,14 @@ class _TaskRepository implements TaskFlowRepository {
     String orgId,
     ProjectRequest request, {
     String? id,
-  }) => throw UnimplementedError();
+  }) async {
+    project = project.copyWith(
+      name: request.name.trim(),
+      description: request.description.trim(),
+    );
+    return project;
+  }
+
   @override
   Future<TaskItem> task(String id) async =>
       tasks.firstWhere((task) => task.id == id);

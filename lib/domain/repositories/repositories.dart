@@ -26,6 +26,8 @@ abstract interface class TaskFlowRepository {
   Future<void> deleteTask(String id);
   Future<TaskItem> assignTask(String taskId, String? userId, String orgId);
   Future<List<AppUser>> membersForOrg(String orgId);
+  Future<List<TaskNotification>> notificationsForUser(String userId);
+  Future<TaskNotification> markNotificationRead(String notificationId);
   Future<void> removeMember(
     String orgId,
     String memberUserId, {

@@ -202,6 +202,24 @@ class LocalTaskFlowRepository implements TaskFlowRepository {
   }
 
   @override
+  Future<List<TaskNotification>> notificationsForUser(String userId) async {
+    await _cancellableDelay('notifications:$userId');
+    final db = await source.load();
+    final notifications =
+        db.notifications
+            .where((notification) => notification.userId == userId)
+            .toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return notifications;
+  }
+
+  @override
+  Future<TaskNotification> markNotificationRead(String notificationId) async {
+    await source.delay();
+    return (await source.setNotificationRead(notificationId)).data;
+  }
+
+  @override
   Future<Project> saveProject(
     String orgId,
     ProjectRequest request, {

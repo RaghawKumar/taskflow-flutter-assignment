@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
 import '../../core/app_localizations.dart';
 import '../blocs/auth/auth_bloc.dart';
+import '../blocs/notifications/notifications_bloc.dart';
 import '../blocs/projects/projects_bloc.dart';
 import '../blocs/settings/settings_cubit.dart';
 import '../blocs/tasks/tasks_bloc.dart';
 import 'projects_screen.dart';
 import 'tasks_screen.dart';
 import 'settings_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -127,7 +129,31 @@ class DashboardPage extends StatelessWidget {
     final tasks = tasksState.tasks;
     final done = tasks.where((t) => t.status.name == 'done').length;
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.text('dashboard'))),
+      appBar: AppBar(
+        title: Text(context.l10n.text('dashboard')),
+        actions: [
+          BlocBuilder<NotificationsBloc, NotificationsState>(
+            builder: (context, state) => Semantics(
+              button: true,
+              label: 'Notifications, ${state.unreadCount} unread',
+              child: IconButton(
+                tooltip: 'Notifications',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsScreen(),
+                  ),
+                ),
+                icon: Badge(
+                  isLabelVisible: state.unreadCount > 0,
+                  label: Text('${state.unreadCount}'),
+                  child: const Icon(Icons.notifications_outlined),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           await Future.wait([

@@ -103,6 +103,12 @@ class _TaskRepository implements TaskFlowRepository {
   @override
   Future<List<AppUser>> membersForOrg(String orgId) async => [];
   @override
+  Future<List<TaskNotification>> notificationsForUser(String userId) async =>
+      [];
+  @override
+  Future<TaskNotification> markNotificationRead(String notificationId) =>
+      throw UnimplementedError();
+  @override
   Future<TaskItem> assignTask(String taskId, String? userId, String orgId) =>
       throw UnimplementedError();
   @override

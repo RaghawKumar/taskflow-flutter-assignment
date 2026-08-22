@@ -6,6 +6,7 @@ import 'data/datasources/mock_data_source.dart';
 import 'data/repositories/local_repositories.dart';
 import 'domain/models/models.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
+import 'presentation/blocs/notifications/notifications_bloc.dart';
 import 'presentation/blocs/projects/projects_bloc.dart';
 import 'presentation/blocs/settings/settings_cubit.dart';
 import 'presentation/blocs/tasks/tasks_bloc.dart';
@@ -22,6 +23,7 @@ void main() {
       projectsBloc: ProjectsBloc(taskRepository),
       tasksBloc: TasksBloc(taskRepository),
       settingsCubit: SettingsCubit(taskRepository),
+      notificationsBloc: NotificationsBloc(taskRepository),
     ),
   );
 }
@@ -33,11 +35,13 @@ class TaskFlowApp extends StatelessWidget {
     required this.projectsBloc,
     required this.tasksBloc,
     required this.settingsCubit,
+    required this.notificationsBloc,
   });
   final AuthBloc authBloc;
   final ProjectsBloc projectsBloc;
   final TasksBloc tasksBloc;
   final SettingsCubit settingsCubit;
+  final NotificationsBloc notificationsBloc;
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -46,6 +50,7 @@ class TaskFlowApp extends StatelessWidget {
       BlocProvider.value(value: projectsBloc),
       BlocProvider.value(value: tasksBloc),
       BlocProvider.value(value: settingsCubit),
+      BlocProvider.value(value: notificationsBloc),
     ],
     child: BlocListener<AuthBloc, AuthState>(
       listenWhen: (previous, current) => previous.session != current.session,
@@ -54,9 +59,11 @@ class TaskFlowApp extends StatelessWidget {
         if (session == null) {
           context.read<ProjectsBloc>().clear();
           context.read<TasksBloc>().clear();
+          context.read<NotificationsBloc>().clear();
         } else {
           context.read<ProjectsBloc>().load(session.orgId);
           context.read<TasksBloc>().load(session.orgId);
+          context.read<NotificationsBloc>().load(session.user.id);
         }
       },
       child: BlocBuilder<SettingsCubit, SettingsState>(

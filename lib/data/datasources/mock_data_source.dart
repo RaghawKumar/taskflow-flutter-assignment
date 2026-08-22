@@ -27,6 +27,9 @@ abstract interface class MockDataSource {
     String? userId,
   );
   Future<MutationResponse<bool>> removeMembership(String orgId, String userId);
+  Future<MutationResponse<TaskNotification>> setNotificationRead(
+    String notificationId,
+  );
   Future<void> delay([CancellationToken? cancellationToken]);
   bool get offline;
   set offline(bool value);
@@ -143,6 +146,31 @@ class AssetMockDataSource implements MockDataSource {
       }
     }
     return MutationResponse(data: removed);
+  }
+
+  @override
+  Future<MutationResponse<TaskNotification>> setNotificationRead(
+    String notificationId,
+  ) async {
+    final db = await load();
+    final index = db.notifications.indexWhere(
+      (notification) => notification.id == notificationId,
+    );
+    if (index < 0) {
+      throw const AppException('404 — notification not found.');
+    }
+    final current = db.notifications[index];
+    final updated = TaskNotification(
+      id: current.id,
+      userId: current.userId,
+      type: current.type,
+      taskId: current.taskId,
+      message: current.message,
+      read: true,
+      createdAt: current.createdAt,
+    );
+    db.notifications[index] = updated;
+    return MutationResponse(data: updated);
   }
 
   @override

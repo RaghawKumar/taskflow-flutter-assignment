@@ -51,6 +51,7 @@ The app uses the `flutter_bloc` package with bounded feature ownership: `AuthBlo
 - Animated, screen-reader-aware skeleton loading states
 - English and Hindi localization with an in-app language selector
 - Accessibility semantics for metrics, tasks, loading announcements, destructive-action tooltips, and large-text-safe scrolling layouts
+- User-scoped notification inbox with unread badge, read state, pull-to-refresh, and navigation to the related task
 
 ## Reviewer credentials
 

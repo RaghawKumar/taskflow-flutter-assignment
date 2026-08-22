@@ -65,6 +65,7 @@ Registration validates locally and simulates success without adding a credential
 - Access token expiry after 900 seconds and automatic mock refresh on restoration
 - Opt-in biometric unlock for a stored session, with retry and password fallback
 - Automatic logout after five minutes without touch or keyboard activity, including background/resume elapsed-time checks
+- Android fingerprint/face authentication and iOS Face ID/Touch ID configuration through the same platform-independent biometric service
 - Organization-scoped project list/detail, create/edit/delete, status summaries
 - Complete task list/detail/create/edit/delete, status and priority updates
 - Status, priority, assignee and inclusive due-date-range filters
@@ -81,6 +82,7 @@ Registration validates locally and simulates success without adding a credential
 - English and Hindi localization with an in-app language selector
 - Accessibility semantics for metrics, tasks, loading announcements, destructive-action tooltips, and large-text-safe scrolling layouts
 - User-scoped notification inbox with unread badge, read state, pull-to-refresh, and navigation to the related task
+- Branded TF launcher icons for Android and a complete iOS AppIcon catalog, including the 1024×1024 App Store icon
 
 ## Reviewer credentials
 
@@ -102,7 +104,7 @@ All credentials are loaded through the data layer from `auth_mock.test_credentia
 
 Open **Settings** after login:
 
-1. **Biometric unlock:** on a device/emulator with an enrolled fingerprint or face credential, open **Settings → Security** and enable **Biometric unlock**. Approve the verification prompt, restart the app, and authenticate again when TaskFlow restores the stored session. Cancelling shows a retry button on Login; password login remains available. Unsupported or unenrolled devices show a clear message and remain unlocked.
+1. **Biometric unlock:** on an Android or iOS device/simulator with an enrolled fingerprint, Face ID, or Touch ID credential, open **Settings → Security** and enable **Biometric unlock**. Approve the verification prompt, restart the app, and authenticate again when TaskFlow restores the stored session. Cancelling shows a retry button on Login; password login remains available. Unsupported or unenrolled devices show a clear message and remain unlocked. iOS includes the required Face ID usage description in `ios/Runner/Info.plist`.
 2. **Automatic inactivity timeout:** leave an authenticated screen untouched for five minutes. TaskFlow deletes the secure session and returns to Login. Touch, pointer movement, or keyboard input resets the timer; returning from the background also checks elapsed time.
 3. **Request timeout:** enable **Simulate timeout**, then pull down on Projects or Tasks. The error/retry UI appears. Disable the toggle and tap retry to recover.
 4. **Offline with cached data:** first load Projects and Tasks online, then enable **Simulate offline**. Existing data remains visible with an orange stale-data warning. Pull-to-refresh/retry is safe. Disable the toggle to reconnect and automatically refresh.
@@ -165,12 +167,12 @@ Unit coverage includes validation, multi-dimensional task filtering, feature-BLo
 
 ## Technical decisions and limitations
 
-- Android is the required and verified target. iOS is optional in the brief and has not been treated as a release target.
+- Android is the required and verified release target. The optional iOS project includes the complete branded AppIcon catalog, secure-storage integration, and Face ID/Touch ID permission/configuration, but an iOS release archive has not been verified or submitted.
 - Project/task/member mutations are intentionally process-local, as permitted by the brief. SharedPreferences stores the last successful project/task snapshots for offline display, not a durable transactional database.
 - Registration simulates success and does not create a persistent credential.
 - Mock refresh retains the fixture refresh token but issues a distinct JWT-style simulated access token and renews its 15-minute expiry. This demonstrates client session behavior; it does not cryptographically sign or remotely validate a real JWT. Tokens are never logged or exposed to widgets.
 - Offline mode supports cached reads and retry, but offline mutations and the optional pending-operation synchronization queue are not implemented.
 - The notification inbox reads assignment-event fixtures and deep-links to related tasks; creating a new assignment does not synthesize a new notification event.
 - Dark mode, responsive/tablet layouts, animations, skeleton loading, accessibility semantics, English/Hindi localization, notifications, cancellation, golden testing, and coverage output are included bonus work. Localization covers application-authored UI; fixture content remains in its source language.
-- Biometric unlock is opt-in and depends on an enrolled Android device credential. It protects restoration of the existing secure session; passwords and biometric data are never stored by TaskFlow. Automatic inactivity logout is fixed at five minutes for a deterministic reviewer demonstration.
+- Biometric unlock is opt-in and depends on an enrolled Android or iOS device credential. It protects restoration of the existing secure session; passwords and biometric data are never stored by TaskFlow. Automatic inactivity logout is fixed at five minutes for a deterministic reviewer demonstration.
 - Mock `avatar_url` values are parsed and represented in the user model. Their five fixture images are bundled under `assets/avatars/`, so profiles and member lists display them without runtime third-party network calls.

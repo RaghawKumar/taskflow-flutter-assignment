@@ -79,7 +79,7 @@ The release APK is written to `build/app/outputs/flutter-apk/app-release.apk`.
 
 ## Tests
 
-Unit coverage includes validation and multi-dimensional task filtering. Widget coverage includes login form validation. The `integration_test` device-suite entry point is isolated from the unit suite and ready for device-driven flows. Tests use fakes and never require a network.
+Unit coverage includes validation, multi-dimensional task filtering, BLoC authentication success/failure, data loading success/error/retry, and protected-mutation failures. Widget coverage includes login form validation and responsive breakpoints. The `integration_test` device-suite entry point is isolated from the unit suite and ready for device-driven flows. Tests use fakes and never require a network.
 
 ## Technical decisions and limitations
 

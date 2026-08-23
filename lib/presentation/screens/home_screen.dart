@@ -41,22 +41,22 @@ class _HomeScreenState extends State<HomeScreen> {
             selectedIndex: index,
             onDestinationSelected: (v) => setState(() => index = v),
             labelType: NavigationRailLabelType.all,
-            destinations: const [
+            destinations: [
               NavigationRailDestination(
-                icon: Icon(Icons.dashboard_outlined),
-                label: Text('Home'),
+                icon: const Icon(Icons.dashboard_outlined),
+                label: Text(context.l10n.text('home')),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.folder_outlined),
-                label: Text('Projects'),
+                icon: const Icon(Icons.folder_outlined),
+                label: Text(context.l10n.text('projects')),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.task_alt),
-                label: Text('Tasks'),
+                icon: const Icon(Icons.task_alt),
+                label: Text(context.l10n.text('tasks')),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.settings_outlined),
-                label: Text('Settings'),
+                icon: const Icon(Icons.settings_outlined),
+                label: Text(context.l10n.text('settings')),
               ),
             ],
           ),
@@ -146,9 +146,10 @@ class DashboardPage extends StatelessWidget {
           BlocBuilder<NotificationsBloc, NotificationsState>(
             builder: (context, state) => Semantics(
               button: true,
-              label: 'Notifications, ${state.unreadCount} unread',
+              label:
+                  '${context.l10n.text('notifications')}, ${state.unreadCount} ${context.l10n.text('unread')}',
               child: IconButton(
-                tooltip: 'Notifications',
+                tooltip: context.l10n.text('notifications'),
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -237,11 +238,11 @@ class DashboardPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             if (tasks.every((t) => t.status.name == 'done'))
-              const Card(
+              Card(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Center(
-                    child: Text('Everything is complete. Great work!'),
+                    child: Text(context.l10n.text('everythingComplete')),
                   ),
                 ),
               ),
@@ -287,7 +288,9 @@ class DashboardPage extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      subtitle: Text('Due ${_date(t.dueDate)}'),
+                      subtitle: Text(
+                        '${context.l10n.text('due')} ${_date(t.dueDate)}',
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -354,7 +357,7 @@ class _WelcomeBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, ${user.name.split(' ').first}',
+                      '${context.l10n.text('hello')}, ${user.name.split(' ').first}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: scheme.onPrimary,
                         fontWeight: FontWeight.w800,
@@ -363,7 +366,7 @@ class _WelcomeBanner extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       openTasks == 0
-                          ? 'Everything is complete. Great work!'
+                          ? context.l10n.text('everythingComplete')
                           : '$openTasks open ${openTasks == 1 ? 'task' : 'tasks'} ready for your attention.',
                       style: TextStyle(
                         color: scheme.onPrimary.withValues(alpha: 0.82),

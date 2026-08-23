@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
+import '../../core/app_localizations.dart';
 import '../../domain/models/models.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/notifications/notifications_bloc.dart';
@@ -17,7 +18,7 @@ class NotificationsScreen extends StatelessWidget {
     final bloc = context.watch<NotificationsBloc>();
     final state = bloc.state;
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(title: Text(context.l10n.text('notifications'))),
       body: switch (state.phase) {
         LoadPhase.initial || LoadPhase.loading => const SkeletonList(items: 4),
         LoadPhase.error => Center(
@@ -26,21 +27,23 @@ class NotificationsScreen extends StatelessWidget {
             children: [
               const Icon(Icons.notifications_off_outlined, size: 56),
               const SizedBox(height: 12),
-              Text(state.error ?? 'Could not load notifications'),
+              Text(
+                state.error ?? context.l10n.text('couldNotLoadNotifications'),
+              ),
               TextButton(
                 onPressed: () => bloc.load(session.user.id),
-                child: const Text('Retry'),
+                child: Text(context.l10n.text('retry')),
               ),
             ],
           ),
         ),
-        LoadPhase.empty => const Center(
+        LoadPhase.empty => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.notifications_none, size: 56),
-              SizedBox(height: 12),
-              Text('No notifications yet'),
+              const Icon(Icons.notifications_none, size: 56),
+              const SizedBox(height: 12),
+              Text(context.l10n.text('noNotifications')),
             ],
           ),
         ),
@@ -57,7 +60,7 @@ class NotificationsScreen extends StatelessWidget {
                 child: Semantics(
                   button: true,
                   label:
-                      '${notification.read ? 'Read' : 'Unread'} notification: ${notification.message}',
+                      '${context.l10n.text(notification.read ? 'read' : 'unread')} ${context.l10n.text('notification')}: ${notification.message}',
                   child: Card(
                     color: notification.read
                         ? null
@@ -110,9 +113,7 @@ class NotificationsScreen extends StatelessWidget {
     );
     if (!exists) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('The related task is no longer available.'),
-        ),
+        SnackBar(content: Text(context.l10n.text('notificationTaskMissing'))),
       );
       return;
     }

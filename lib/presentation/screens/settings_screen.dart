@@ -33,18 +33,18 @@ class SettingsScreen extends StatelessWidget {
             orgId: session.orgId,
           ),
           const SizedBox(height: 26),
-          const _SettingsSectionTitle(
+          _SettingsSectionTitle(
             icon: Icons.apartment_rounded,
-            title: 'Organization',
+            title: context.l10n.text('organization'),
           ),
           const SizedBox(height: 10),
           _SettingsCard(
             child: _SettingsTile(
               icon: Icons.groups_rounded,
-              title: 'Organization members',
+              title: context.l10n.text('organizationMembers'),
               subtitle: session.isAdmin
-                  ? 'View and manage organization access'
-                  : 'View people in your organization',
+                  ? context.l10n.text('viewManageAccess')
+                  : context.l10n.text('viewOrganizationPeople'),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => Navigator.push(
                 context,
@@ -53,9 +53,9 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const _SettingsSectionTitle(
+          _SettingsSectionTitle(
             icon: Icons.palette_outlined,
-            title: 'Preferences',
+            title: context.l10n.text('preferences'),
           ),
           const SizedBox(height: 10),
           _SettingsCard(
@@ -67,8 +67,8 @@ class SettingsScreen extends StatelessWidget {
                       : Icons.light_mode_rounded,
                   title: context.l10n.text('darkMode'),
                   subtitle: settings.state.darkMode
-                      ? 'Using the TaskFlow dark theme'
-                      : 'Using the TaskFlow light theme',
+                      ? context.l10n.text('darkThemeUsing')
+                      : context.l10n.text('lightThemeUsing'),
                   value: settings.state.darkMode,
                   onChanged: settings.toggleTheme,
                 ),
@@ -76,7 +76,7 @@ class SettingsScreen extends StatelessWidget {
                 _SettingsTile(
                   icon: Icons.language_rounded,
                   title: context.l10n.text('language'),
-                  subtitle: 'Choose the application language',
+                  subtitle: context.l10n.text('chooseLanguage'),
                   trailing: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: settings.state.locale.languageCode,
@@ -103,9 +103,9 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const _SettingsSectionTitle(
+          _SettingsSectionTitle(
             icon: Icons.security_rounded,
-            title: 'Security',
+            title: context.l10n.text('security'),
           ),
           const SizedBox(height: 10),
           _SettingsCard(
@@ -113,12 +113,12 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 _SettingsSwitchTile(
                   icon: Icons.fingerprint_rounded,
-                  title: 'Biometric unlock',
+                  title: context.l10n.text('biometricUnlock'),
                   subtitle: settings.state.biometricAvailable == false
-                      ? 'No enrolled biometrics detected on this device'
+                      ? context.l10n.text('biometricUnavailable')
                       : settings.state.biometricEnabled
-                      ? 'Required when restoring your saved session'
-                      : 'Use fingerprint or face authentication to unlock',
+                      ? context.l10n.text('biometricRequiredSubtitle')
+                      : context.l10n.text('biometricUseSubtitle'),
                   value: settings.state.biometricEnabled,
                   onChanged: (value) async {
                     final message = await settings.setBiometricEnabled(value);
@@ -129,27 +129,27 @@ class SettingsScreen extends StatelessWidget {
                       ).showSnackBar(SnackBar(content: Text(message)));
                     } else if (value) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Biometric unlock enabled.'),
+                        SnackBar(
+                          content: Text(context.l10n.text('biometricEnabled')),
                         ),
                       );
                     }
                   },
                 ),
                 const _SettingsDivider(),
-                const _SettingsTile(
+                _SettingsTile(
                   icon: Icons.lock_clock_rounded,
-                  title: 'Automatic session timeout',
-                  subtitle: 'Signs you out after 5 minutes of inactivity',
-                  trailing: _SecurityStatusBadge(text: 'Active'),
+                  title: context.l10n.text('sessionTimeout'),
+                  subtitle: context.l10n.text('sessionTimeoutSubtitle'),
+                  trailing: _SecurityStatusBadge(text: context.l10n.text('on')),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          const _SettingsSectionTitle(
+          _SettingsSectionTitle(
             icon: Icons.science_outlined,
-            title: 'Testing & connectivity',
+            title: context.l10n.text('testingConnectivity'),
           ),
           const SizedBox(height: 10),
           _SettingsCard(
@@ -157,8 +157,8 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 _SettingsSwitchTile(
                   icon: Icons.wifi_off_rounded,
-                  title: 'Simulate offline',
-                  subtitle: 'Preserve loaded projects and tasks as stale data',
+                  title: context.l10n.text('simulateOffline'),
+                  subtitle: context.l10n.text('simulateOfflineSubtitle'),
                   value: settings.state.offline,
                   onChanged: (value) async {
                     settings.setOffline(value);
@@ -173,20 +173,20 @@ class SettingsScreen extends StatelessWidget {
                 const _SettingsDivider(),
                 _SettingsSwitchTile(
                   icon: Icons.timer_off_outlined,
-                  title: 'Simulate timeout',
-                  subtitle: 'Enable this, then pull a list to refresh',
+                  title: context.l10n.text('simulateTimeout'),
+                  subtitle: context.l10n.text('simulateTimeoutSubtitle'),
                   value: settings.state.forcedError != null,
                   onChanged: (value) => settings.simulateError(
-                    value ? 'Request timed out. Please retry.' : null,
+                    value ? context.l10n.text('requestTimedOut') : null,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          const _SettingsSectionTitle(
+          _SettingsSectionTitle(
             icon: Icons.manage_accounts_outlined,
-            title: 'Account',
+            title: context.l10n.text('account'),
           ),
           const SizedBox(height: 10),
           _SettingsCard(

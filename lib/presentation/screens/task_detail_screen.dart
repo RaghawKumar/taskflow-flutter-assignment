@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
+import '../../core/app_localizations.dart';
 import '../../domain/models/models.dart';
 import '../blocs/tasks/tasks_bloc.dart';
 import 'projects_screen.dart';
@@ -21,32 +22,34 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     final bloc = context.watch<TasksBloc>();
     final matches = bloc.state.tasks.where((t) => t.id == widget.taskId);
     if (matches.isEmpty && deleting) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Deleting task…'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(context.l10n.text('deletingTask')),
             ],
           ),
         ),
       );
     }
     if (matches.isEmpty) {
-      return const Scaffold(body: Center(child: Text('404 — task not found.')));
+      return Scaffold(
+        body: Center(child: Text(context.l10n.text('taskNotFound'))),
+      );
     }
     final task = matches.first;
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Task details',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(
+          context.l10n.text('taskDetails'),
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         actions: [
           IconButton(
-            tooltip: 'Edit task',
+            tooltip: context.l10n.text('editTask'),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -57,7 +60,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             icon: const Icon(Icons.edit),
           ),
           IconButton(
-            tooltip: 'Delete task',
+            tooltip: context.l10n.text('deleteTask'),
             onPressed: deleting ? null : () => _deleteTask(bloc, task),
             icon: const Icon(Icons.delete_outline),
           ),
@@ -69,7 +72,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           _TaskOverviewCard(task: task),
           const SizedBox(height: 26),
           Text(
-            'Manage task',
+            context.l10n.text('manageTask'),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -92,7 +95,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       Navigator.pop(context);
     } else {
       setState(() => deleting = false);
-      showError(context, bloc.state.error ?? 'Could not delete task.');
+      showError(
+        context,
+        bloc.state.error ?? context.l10n.text('couldNotDeleteTask'),
+      );
     }
   }
 }
@@ -144,7 +150,7 @@ class _TaskOverviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            'Description',
+            context.l10n.text('description'),
             style: theme.textTheme.labelLarge?.copyWith(
               color: primary,
               fontWeight: FontWeight.w800,
@@ -153,7 +159,7 @@ class _TaskOverviewCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             task.description.trim().isEmpty
-                ? 'No description added for this task.'
+                ? context.l10n.text('noTaskDescription')
                 : task.description,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -194,7 +200,7 @@ class _TaskManagementCard extends StatelessWidget {
                 Icon(Icons.tune_rounded, color: primary),
                 const SizedBox(width: 9),
                 Text(
-                  'Progress and assignment',
+                  context.l10n.text('progressAssignment'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -207,15 +213,15 @@ class _TaskManagementCard extends StatelessWidget {
                 final status = DropdownButtonFormField<TaskStatus>(
                   key: const Key('status_dropdown'),
                   initialValue: task.status,
-                  decoration: const InputDecoration(
-                    labelText: 'Status',
-                    prefixIcon: Icon(Icons.flag_outlined),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.text('status'),
+                    prefixIcon: const Icon(Icons.flag_outlined),
                   ),
                   items: TaskStatus.values
                       .map(
                         (value) => DropdownMenuItem(
                           value: value,
-                          child: Text(enumLabel(value.name)),
+                          child: Text(context.l10n.enumText(value.name)),
                         ),
                       )
                       .toList(),
@@ -231,15 +237,15 @@ class _TaskManagementCard extends StatelessWidget {
                 );
                 final priority = DropdownButtonFormField<TaskPriority>(
                   initialValue: task.priority,
-                  decoration: const InputDecoration(
-                    labelText: 'Priority',
-                    prefixIcon: Icon(Icons.low_priority_rounded),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.text('priority'),
+                    prefixIcon: const Icon(Icons.low_priority_rounded),
                   ),
                   items: TaskPriority.values
                       .map(
                         (value) => DropdownMenuItem(
                           value: value,
-                          child: Text(enumLabel(value.name)),
+                          child: Text(context.l10n.enumText(value.name)),
                         ),
                       )
                       .toList(),
@@ -271,12 +277,15 @@ class _TaskManagementCard extends StatelessWidget {
             DropdownButtonFormField<String?>(
               key: const Key('assignee_dropdown'),
               initialValue: task.assigneeId,
-              decoration: const InputDecoration(
-                labelText: 'Assignee',
-                prefixIcon: Icon(Icons.person_outline_rounded),
+              decoration: InputDecoration(
+                labelText: context.l10n.text('assignee'),
+                prefixIcon: const Icon(Icons.person_outline_rounded),
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('Unassigned')),
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(context.l10n.text('unassigned')),
+                ),
                 ...bloc.state.members.map(
                   (user) =>
                       DropdownMenuItem(value: user.id, child: Text(user.name)),
@@ -324,7 +333,7 @@ class _TaskDueDateCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Due date',
+                  context.l10n.text('dueDate'),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: primary,
                     fontWeight: FontWeight.w800,
@@ -350,14 +359,14 @@ Future<bool> confirmTaskDelete(BuildContext context, String taskTitle) async =>
     await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Task'),
+        title: Text(context.l10n.text('deleteTask')),
         content: Text(
-          'Are you sure you want to delete “$taskTitle”? This action cannot be undone.',
+          '“$taskTitle” — ${context.l10n.text('confirmDeleteTask')}',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.text('cancel')),
           ),
           FilledButton(
             key: const Key('confirm_delete_task'),
@@ -366,7 +375,7 @@ Future<bool> confirmTaskDelete(BuildContext context, String taskTitle) async =>
               foregroundColor: Theme.of(context).colorScheme.onError,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete Task'),
+            child: Text(context.l10n.text('deleteTask')),
           ),
         ],
       ),
@@ -422,7 +431,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.task == null ? 'Create task' : 'Edit task',
+          context.l10n.text(widget.task == null ? 'createTask' : 'editTask'),
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
@@ -440,7 +449,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                   const SizedBox(height: 26),
                   _FormSectionTitle(
                     icon: Icons.edit_note_rounded,
-                    title: 'Task information',
+                    title: context.l10n.text('taskInformation'),
                   ),
                   const SizedBox(height: 12),
                   _TaskFormSection(
@@ -452,11 +461,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                           textInputAction: TextInputAction.next,
                           validator: (value) =>
                               value == null || value.trim().isEmpty
-                              ? 'Task title is required.'
+                              ? context.l10n.text('taskTitleRequired')
                               : null,
-                          decoration: const InputDecoration(
-                            labelText: 'Title',
-                            prefixIcon: Icon(Icons.title_rounded),
+                          decoration: InputDecoration(
+                            labelText: context.l10n.text('title'),
+                            prefixIcon: const Icon(Icons.title_rounded),
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -465,10 +474,10 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                           controller: description,
                           minLines: 3,
                           maxLines: 5,
-                          decoration: const InputDecoration(
-                            labelText: 'Description',
+                          decoration: InputDecoration(
+                            labelText: context.l10n.text('description'),
                             alignLabelWithHint: true,
-                            prefixIcon: Padding(
+                            prefixIcon: const Padding(
                               padding: EdgeInsets.only(bottom: 68),
                               child: Icon(Icons.notes_rounded),
                             ),
@@ -478,9 +487,9 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const _FormSectionTitle(
+                  _FormSectionTitle(
                     icon: Icons.tune_rounded,
-                    title: 'Planning and assignment',
+                    title: context.l10n.text('planningAssignment'),
                   ),
                   const SizedBox(height: 12),
                   _TaskFormSection(
@@ -491,15 +500,17 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                             final statusField =
                                 DropdownButtonFormField<TaskStatus>(
                                   initialValue: status,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Status',
-                                    prefixIcon: Icon(Icons.flag_outlined),
+                                  decoration: InputDecoration(
+                                    labelText: context.l10n.text('status'),
+                                    prefixIcon: const Icon(Icons.flag_outlined),
                                   ),
                                   items: TaskStatus.values
                                       .map(
                                         (value) => DropdownMenuItem(
                                           value: value,
-                                          child: Text(enumLabel(value.name)),
+                                          child: Text(
+                                            context.l10n.enumText(value.name),
+                                          ),
                                         ),
                                       )
                                       .toList(),
@@ -512,9 +523,9 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                             final priorityField =
                                 DropdownButtonFormField<TaskPriority>(
                                   initialValue: priority,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Priority',
-                                    prefixIcon: Icon(
+                                  decoration: InputDecoration(
+                                    labelText: context.l10n.text('priority'),
+                                    prefixIcon: const Icon(
                                       Icons.low_priority_rounded,
                                     ),
                                   ),
@@ -522,7 +533,9 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                                       .map(
                                         (value) => DropdownMenuItem(
                                           value: value,
-                                          child: Text(enumLabel(value.name)),
+                                          child: Text(
+                                            context.l10n.enumText(value.name),
+                                          ),
                                         ),
                                       )
                                       .toList(),
@@ -554,14 +567,16 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                         DropdownButtonFormField<String?>(
                           key: const Key('task_assignee'),
                           initialValue: assignee,
-                          decoration: const InputDecoration(
-                            labelText: 'Assignee',
-                            prefixIcon: Icon(Icons.person_outline_rounded),
+                          decoration: InputDecoration(
+                            labelText: context.l10n.text('assignee'),
+                            prefixIcon: const Icon(
+                              Icons.person_outline_rounded,
+                            ),
                           ),
                           items: [
-                            const DropdownMenuItem(
+                            DropdownMenuItem(
                               value: null,
-                              child: Text('Unassigned'),
+                              child: Text(context.l10n.text('unassigned')),
                             ),
                             ...bloc.state.members.map(
                               (user) => DropdownMenuItem(
@@ -584,7 +599,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     child: FilledButton.icon(
                       onPressed: () => _save(bloc),
                       icon: const Icon(Icons.check_rounded),
-                      label: const Text('Save task'),
+                      label: Text(context.l10n.text('saveTask')),
                       style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(54),
                       ),
@@ -627,7 +642,10 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     if (ok) {
       Navigator.pop(context);
     } else {
-      showError(context, bloc.state.error ?? 'Could not save task.');
+      showError(
+        context,
+        bloc.state.error ?? context.l10n.text('couldNotSaveTask'),
+      );
     }
   }
 }
@@ -669,7 +687,9 @@ class _TaskFormHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isEditing ? 'Update task details' : 'Create a new task',
+                  context.l10n.text(
+                    isEditing ? 'updateTaskDetails' : 'createNewTask',
+                  ),
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -677,8 +697,8 @@ class _TaskFormHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   isEditing
-                      ? 'Keep the task information and ownership up to date.'
-                      : 'Add the information your team needs to get started.',
+                      ? context.l10n.text('editTaskSubtitle')
+                      : context.l10n.text('createTaskSubtitle'),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -766,7 +786,7 @@ class _TaskFormDueDate extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Due date',
+                      context.l10n.text('dueDate'),
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: primary,
                         fontWeight: FontWeight.w700,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/validators.dart';
 import '../../core/app_localizations.dart';
 import '../../domain/models/models.dart';
 import '../blocs/auth/auth_bloc.dart';
@@ -51,20 +50,20 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Welcome to TaskFlow',
+              context.l10n.text('welcome'),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Sign in to plan, assign, and finish work.',
+            Text(
+              context.l10n.text('loginSubtitle'),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
             TextFormField(
               key: const Key('email'),
               controller: email,
-              validator: Validators.email,
+              validator: context.l10n.emailError,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 labelText: context.l10n.text('email'),
@@ -75,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
             TextFormField(
               key: const Key('password'),
               controller: password,
-              validator: Validators.password,
+              validator: context.l10n.passwordError,
               obscureText: hidden,
               decoration: InputDecoration(
                 labelText: context.l10n.text('password'),
@@ -122,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ? null
                     : auth.unlockWithBiometrics,
                 icon: const Icon(Icons.fingerprint_rounded),
-                label: const Text('Unlock with biometrics'),
+                label: Text(context.l10n.text('unlockBiometrics')),
               ),
             ],
             if (auth.state.biometricError != null)
@@ -141,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 context,
                 MaterialPageRoute(builder: (_) => const RegisterScreen()),
               ),
-              child: const Text('Create an account'),
+              child: Text(context.l10n.text('createAccount')),
             ),
           ],
         ),
@@ -203,33 +202,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Create your TaskFlow account',
+                      context.l10n.text('createAccountTitle'),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Registration is simulated for this assignment.',
+                    Text(
+                      context.l10n.text('registerSubtitle'),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 28),
                     TextFormField(
                       controller: name,
-                      validator: (v) => Validators.required(v, 'Name'),
-                      decoration: const InputDecoration(labelText: 'Name'),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? context.l10n.text('nameRequired')
+                          : null,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.text('name'),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: email,
-                      validator: Validators.email,
-                      decoration: const InputDecoration(labelText: 'Email'),
+                      validator: context.l10n.emailError,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.text('email'),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: password,
-                      validator: Validators.password,
+                      validator: context.l10n.passwordError,
                       obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Password'),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.text('password'),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     FilledButton(
@@ -245,16 +253,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text(
-                                'Account simulated successfully. Please sign in with a test account.',
+                                context.l10n.text('registrationSuccess'),
                               ),
                             ),
                           );
                           Navigator.pop(context);
                         }
                       },
-                      child: const Text('Register'),
+                      child: Text(context.l10n.text('register')),
                     ),
                   ],
                 ),

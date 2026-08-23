@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/responsive.dart';
+import '../../core/app_localizations.dart';
 import '../../domain/models/models.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/tasks/tasks_bloc.dart';
@@ -17,9 +18,9 @@ class MembersScreen extends StatelessWidget {
     final members = tasksBloc.state.members;
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Organization Members',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(
+          context.l10n.text('organizationMembers'),
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
       body: RefreshIndicator(
@@ -37,14 +38,14 @@ class MembersScreen extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'People',
+                  context.l10n.text('people'),
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const Spacer(),
                 Text(
-                  '${members.length} total',
+                  '${members.length} ${context.l10n.text('total')}',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w700,
@@ -104,22 +105,22 @@ class MembersScreen extends StatelessWidget {
           Icons.person_remove_outlined,
           color: Theme.of(context).colorScheme.primary,
         ),
-        title: const Text(
-          'Remove Member',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(
+          context.l10n.text('removeMemberTitle'),
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         content: Text(
-          'Remove $memberName from this organization? Their assigned tasks will become unassigned.',
+          '$memberName — ${context.l10n.text('memberRemoveConfirm')}',
           textAlign: TextAlign.center,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.text('cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Remove Member'),
+            child: Text(context.l10n.text('removeMemberTitle')),
           ),
         ],
       ),
@@ -128,7 +129,10 @@ class MembersScreen extends StatelessWidget {
     final actor = context.read<AuthBloc>().state.session!.user.id;
     final removed = await bloc.removeMember(memberUserId, actorUserId: actor);
     if (!removed && context.mounted) {
-      showError(context, bloc.state.error ?? 'Could not remove member.');
+      showError(
+        context,
+        bloc.state.error ?? context.l10n.text('couldNotRemoveMember'),
+      );
     }
   }
 }
@@ -184,8 +188,8 @@ class _MembersHeader extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   isAdmin
-                      ? 'Manage access for organization $orgId'
-                      : 'People with access to organization $orgId',
+                      ? '${context.l10n.text('manageOrgAccess')} $orgId'
+                      : '${context.l10n.text('peopleOrgAccess')} $orgId',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -201,7 +205,7 @@ class _MembersHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Admin',
+                context.l10n.text('admin'),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: primary,
                   fontWeight: FontWeight.w800,
@@ -320,7 +324,7 @@ class _MemberCard extends StatelessWidget {
             if (canRemove) ...[
               const SizedBox(width: 6),
               IconButton.filledTonal(
-                tooltip: 'Remove member',
+                tooltip: context.l10n.text('removeMember'),
                 icon: const Icon(Icons.person_remove_outlined),
                 onPressed: onRemove,
               ),
@@ -351,14 +355,14 @@ class _EmptyMembers extends StatelessWidget {
           Icon(Icons.group_off_outlined, size: 44, color: primary),
           const SizedBox(height: 12),
           Text(
-            'No organization members',
+            context.l10n.text('noOrganizationMembers'),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 5),
           Text(
-            'Pull down to refresh the organization member list.',
+            context.l10n.text('pullMembersRefresh'),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,

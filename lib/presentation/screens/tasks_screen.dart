@@ -38,7 +38,7 @@ class TasksScreen extends StatelessWidget {
               isLabelVisible: hasFilters,
               smallSize: 8,
               child: IconButton(
-                tooltip: 'Filter tasks',
+                tooltip: context.l10n.text('filterTasks'),
                 onPressed: () => showFilters(context),
                 icon: Icon(
                   hasFilters
@@ -62,9 +62,9 @@ class TasksScreen extends StatelessWidget {
           ? Center(
               child: _TasksMessage(
                 icon: Icons.cloud_off_rounded,
-                title: 'Could not load tasks',
-                message: state.error ?? 'Failed to load',
-                actionLabel: 'Retry',
+                title: context.l10n.text('couldNotLoadTasks'),
+                message: state.error ?? context.l10n.text('failedToLoad'),
+                actionLabel: context.l10n.text('retry'),
                 onAction: () => bloc.load(session.orgId),
               ),
             )
@@ -72,9 +72,13 @@ class TasksScreen extends StatelessWidget {
           ? Center(
               child: _TasksMessage(
                 icon: Icons.task_alt_rounded,
-                title: hasFilters ? 'No matching tasks' : 'No tasks yet',
-                message: 'No tasks match these filters.',
-                actionLabel: hasFilters ? 'Clear filters' : null,
+                title: context.l10n.text(
+                  hasFilters ? 'noMatchingTasks' : 'noTasks',
+                ),
+                message: context.l10n.text('noTasksMatch'),
+                actionLabel: hasFilters
+                    ? context.l10n.text('clearFilters')
+                    : null,
                 onAction: hasFilters
                     ? () => bloc.setFilter(const TaskFilter())
                     : null,
@@ -121,7 +125,7 @@ class TaskCard extends StatelessWidget {
     return Semantics(
       button: true,
       label:
-          '${task.title}, ${enumLabel(task.priority.name)} priority, ${enumLabel(task.status.name)}, ${assignee ?? 'Unassigned'}',
+          '${task.title}, ${context.l10n.enumText(task.priority.name)}, ${context.l10n.enumText(task.status.name)}, ${assignee ?? context.l10n.text('unassigned')}',
       child: Card(
         margin: EdgeInsets.zero,
         elevation: theme.brightness == Brightness.dark ? 0 : 2,
@@ -188,15 +192,15 @@ class TaskCard extends StatelessWidget {
                   children: [
                     _TaskMetaPill(
                       icon: Icons.flag_outlined,
-                      label: enumLabel(task.priority.name),
+                      label: context.l10n.enumText(task.priority.name),
                     ),
                     _TaskMetaPill(
                       icon: Icons.track_changes_rounded,
-                      label: enumLabel(task.status.name),
+                      label: context.l10n.enumText(task.status.name),
                     ),
                     _TaskMetaPill(
                       icon: Icons.person_outline_rounded,
-                      label: assignee ?? 'Unassigned',
+                      label: assignee ?? context.l10n.text('unassigned'),
                     ),
                     _TaskMetaPill(
                       icon: Icons.calendar_today_outlined,
@@ -298,7 +302,9 @@ class _TaskListHeader extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    hasFilters ? 'Filtered results' : 'All assigned work',
+                    context.l10n.text(
+                      hasFilters ? 'filteredResults' : 'allAssignedWork',
+                    ),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -307,7 +313,7 @@ class _TaskListHeader extends StatelessWidget {
               ),
             ),
             IconButton.filledTonal(
-              tooltip: 'Filter tasks',
+              tooltip: context.l10n.text('filterTasks'),
               onPressed: onFilter,
               icon: const Icon(Icons.tune_rounded),
             ),
@@ -385,7 +391,7 @@ Future<void> showProjectPicker(BuildContext context) async {
       child: ListView(
         shrinkWrap: true,
         children: [
-          const ListTile(title: Text('Choose a project')),
+          ListTile(title: Text(context.l10n.text('chooseProject'))),
           ...projects.map(
             (p) => ListTile(
               title: Text(p.name),
@@ -450,7 +456,7 @@ Future<void> showFilters(BuildContext context) async {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Narrow tasks by progress, priority, owner, or due date.',
+                    context.l10n.text('filterSubtitle'),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -458,16 +464,19 @@ Future<void> showFilters(BuildContext context) async {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<TaskStatus?>(
                     initialValue: status,
-                    decoration: const InputDecoration(
-                      labelText: 'Status',
-                      prefixIcon: Icon(Icons.flag_outlined),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.text('status'),
+                      prefixIcon: const Icon(Icons.flag_outlined),
                     ),
                     items: [
-                      const DropdownMenuItem(value: null, child: Text('Any')),
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(context.l10n.text('any')),
+                      ),
                       ...TaskStatus.values.map(
                         (v) => DropdownMenuItem(
                           value: v,
-                          child: Text(enumLabel(v.name)),
+                          child: Text(context.l10n.enumText(v.name)),
                         ),
                       ),
                     ],
@@ -476,16 +485,19 @@ Future<void> showFilters(BuildContext context) async {
                   const SizedBox(height: 12),
                   DropdownButtonFormField<TaskPriority?>(
                     initialValue: priority,
-                    decoration: const InputDecoration(
-                      labelText: 'Priority',
-                      prefixIcon: Icon(Icons.low_priority_rounded),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.text('priority'),
+                      prefixIcon: const Icon(Icons.low_priority_rounded),
                     ),
                     items: [
-                      const DropdownMenuItem(value: null, child: Text('Any')),
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(context.l10n.text('any')),
+                      ),
                       ...TaskPriority.values.map(
                         (v) => DropdownMenuItem(
                           value: v,
-                          child: Text(enumLabel(v.name)),
+                          child: Text(context.l10n.enumText(v.name)),
                         ),
                       ),
                     ],
@@ -494,12 +506,15 @@ Future<void> showFilters(BuildContext context) async {
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String?>(
                     initialValue: assignee,
-                    decoration: const InputDecoration(
-                      labelText: 'Assignee',
-                      prefixIcon: Icon(Icons.person_outline_rounded),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.text('assignee'),
+                      prefixIcon: const Icon(Icons.person_outline_rounded),
                     ),
                     items: [
-                      const DropdownMenuItem(value: null, child: Text('Any')),
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(context.l10n.text('any')),
+                      ),
                       ...bloc.state.members.map(
                         (u) =>
                             DropdownMenuItem(value: u.id, child: Text(u.name)),
@@ -529,7 +544,7 @@ Future<void> showFilters(BuildContext context) async {
                               Flexible(
                                 child: Text(
                                   from == null
-                                      ? 'Due from'
+                                      ? context.l10n.text('dueFrom')
                                       : '${from!.day}/${from!.month}/${from!.year}',
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -558,7 +573,7 @@ Future<void> showFilters(BuildContext context) async {
                               Flexible(
                                 child: Text(
                                   to == null
-                                      ? 'Due to'
+                                      ? context.l10n.text('dueTo')
                                       : '${to!.day}/${to!.month}/${to!.year}',
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -577,7 +592,7 @@ Future<void> showFilters(BuildContext context) async {
                           bloc.setFilter(const TaskFilter());
                           Navigator.pop(sheetContext);
                         },
-                        child: const Text('Clear'),
+                        child: Text(context.l10n.text('clear')),
                       ),
                       const Spacer(),
                       FilledButton(
@@ -593,7 +608,7 @@ Future<void> showFilters(BuildContext context) async {
                           );
                           Navigator.pop(sheetContext);
                         },
-                        child: const Text('Apply filters'),
+                        child: Text(context.l10n.text('applyFilters')),
                       ),
                     ],
                   ),

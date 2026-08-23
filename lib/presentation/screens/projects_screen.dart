@@ -24,13 +24,13 @@ class ProjectsScreen extends StatelessWidget {
     } else if (state.phase == LoadPhase.error) {
       body = _State(
         icon: Icons.cloud_off,
-        text: state.error ?? 'Could not load projects',
+        text: state.error ?? context.l10n.text('couldNotLoadProjects'),
         onRetry: () => projectsBloc.load(session.orgId),
       );
     } else if (state.phase == LoadPhase.empty) {
       body = _State(
         icon: Icons.folder_off_outlined,
-        text: 'No projects yet',
+        text: context.l10n.text('noProjects'),
         onRetry: () => showProjectForm(context),
       );
     } else {
@@ -165,14 +165,17 @@ class _ProjectCard extends StatelessWidget {
                     ),
                   ),
                   PopupMenuButton<String>(
-                    tooltip: 'Project actions',
+                    tooltip: context.l10n.text('projectActions'),
                     onSelected: onAction,
                     itemBuilder: (_) => [
-                      const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Text(context.l10n.text('edit')),
+                      ),
                       if (canDelete)
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'delete',
-                          child: Text('Delete'),
+                          child: Text(context.l10n.text('delete')),
                         ),
                     ],
                   ),
@@ -182,7 +185,7 @@ class _ProjectCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   project.description.trim().isEmpty
-                      ? 'No description added.'
+                      ? context.l10n.text('noDescription')
                       : project.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -220,7 +223,7 @@ class _ProjectCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    'View project',
+                    context.l10n.text('viewProject'),
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: primary,
                       fontWeight: FontWeight.w700,
@@ -262,7 +265,7 @@ class ProjectDetailsScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'Edit project',
+            tooltip: context.l10n.text('editProject'),
             icon: const Icon(Icons.edit),
             onPressed: () =>
                 showProjectForm(context, project: displayedProject),
@@ -277,7 +280,7 @@ class ProjectDetailsScreen extends StatelessWidget {
           ),
         ),
         icon: const Icon(Icons.add),
-        label: const Text('Task'),
+        label: Text(context.l10n.text('task')),
       ),
       body: RefreshIndicator(
         onRefresh: () => tasksBloc.load(session.orgId),
@@ -290,7 +293,7 @@ class ProjectDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Task summary',
+              context.l10n.text('taskSummary'),
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -324,7 +327,7 @@ class ProjectDetailsScreen extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'Project tasks',
+                  context.l10n.text('projectTasks'),
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -419,7 +422,7 @@ class _ProjectOverview extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   project.description.trim().isEmpty
-                      ? 'No project description added.'
+                      ? context.l10n.text('noProjectDescription')
                       : project.description,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -472,7 +475,7 @@ class _StatusSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           Text(
-            enumLabel(status.name),
+            context.l10n.enumText(status.name),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.labelMedium?.copyWith(
@@ -533,7 +536,7 @@ class _ProjectTaskCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${enumLabel(task.status.name)}  •  ${enumLabel(task.priority.name)} priority',
+                      '${context.l10n.enumText(task.status.name)}  •  ${context.l10n.enumText(task.priority.name)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -574,14 +577,14 @@ class _EmptyProjectTasks extends StatelessWidget {
           Icon(Icons.playlist_add_rounded, size: 44, color: primary),
           const SizedBox(height: 10),
           Text(
-            'No tasks in this project',
+            context.l10n.text('noProjectTasks'),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            'Create the first task to start tracking progress.',
+            context.l10n.text('createFirstTask'),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -591,7 +594,7 @@ class _EmptyProjectTasks extends StatelessWidget {
           FilledButton.icon(
             onPressed: onCreate,
             icon: const Icon(Icons.add),
-            label: const Text('Create task'),
+            label: Text(context.l10n.text('createTask')),
           ),
         ],
       ),
@@ -649,7 +652,9 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.project == null ? 'New project' : 'Edit project'),
+    title: Text(
+      context.l10n.text(widget.project == null ? 'newProject' : 'editProject'),
+    ),
     content: SizedBox(
       width: 420,
       child: SingleChildScrollView(
@@ -664,9 +669,11 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                 autofocus: true,
                 textInputAction: TextInputAction.next,
                 validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Project name is required.'
+                    ? context.l10n.text('projectNameRequired')
                     : null,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(
+                  labelText: context.l10n.text('name'),
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -674,7 +681,9 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                 controller: description,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: InputDecoration(
+                  labelText: context.l10n.text('description'),
+                ),
               ),
             ],
           ),
@@ -684,7 +693,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
     actions: [
       TextButton(
         onPressed: saving ? null : () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.l10n.text('cancel')),
       ),
       FilledButton(
         key: const Key('save_project'),
@@ -694,7 +703,7 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
                 dimension: 18,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Text('Save'),
+            : Text(context.l10n.text('save')),
       ),
     ],
   );
@@ -714,7 +723,8 @@ class _ProjectFormDialogState extends State<ProjectFormDialog> {
       setState(() => saving = false);
       showError(
         context,
-        widget.projectsBloc.state.error ?? 'Could not save project.',
+        widget.projectsBloc.state.error ??
+            context.l10n.text('couldNotSaveProject'),
       );
     }
   }
@@ -724,16 +734,16 @@ Future<bool> confirmDelete(BuildContext context, String name) async =>
     await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete permanently?'),
-        content: Text('“$name” cannot be recovered.'),
+        title: Text(context.l10n.text('deletePermanently')),
+        content: Text('“$name” — ${context.l10n.text('cannotRecover')}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.text('cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.text('delete')),
           ),
         ],
       ),
@@ -755,7 +765,7 @@ class _State extends StatelessWidget {
         Icon(icon, size: 56),
         const SizedBox(height: 12),
         Text(text),
-        TextButton(onPressed: onRetry, child: const Text('Retry')),
+        TextButton(onPressed: onRetry, child: Text(context.l10n.text('retry'))),
       ],
     ),
   );
